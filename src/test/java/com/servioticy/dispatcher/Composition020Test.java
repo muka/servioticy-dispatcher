@@ -33,14 +33,19 @@ import com.servioticy.datamodel.sensorupdate.SensorUpdate;
 //import com.servioticy.dispatcher.UpdateDescriptorScheme;
 import com.servioticy.dispatcher.bolts.*;
 import com.servioticy.queueclient.QueueClient;
-import com.servioticy.restclient.RestClient;
-import com.servioticy.restclient.RestResponse;
+import com.servioticy.restclient.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 //import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -52,6 +57,45 @@ import static org.mockito.Mockito.*;
 *
 */
 public class Composition020Test {
+    private static final String OPID = "opid";
+    private DispatcherContext dc;
+
+    private static String readFile(String path) throws IOException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        byte[] encoded = Files.readAllBytes(Paths.get(cl.getResource(path).getPath()));
+        return new String(encoded, StandardCharsets.UTF_8);
+    }
+    static private FutureRestResponse mockFutureRestResponse(int resCode, String resBodyFile) throws Exception{
+        String resBody = "";
+        if(resBodyFile != null){
+            resBody = readFile(resBodyFile);
+        }
+        return new FutureRestResponse(new RestResponse(resBody, resCode)) {
+                                      @Override
+                                      public RestResponse get() {
+                                          return this.restResponse;
+                                      }
+                                  };
+    }
+    private void mockCorrectPut(RestClient restClient) throws Exception {
+        when(restClient.restRequest(
+                any(String.class),
+                any(String.class), eq(RestClient.PUT),
+                any(Map.class))).thenReturn(mockFutureRestResponse(202, null));
+    }
+    private void mockCorrectGetOpid(RestClient restClient) throws Exception {
+        when(restClient.restRequest(
+                dc.restBaseURL
+                        + "private/opid/" + OPID, null,
+                RestClient.GET,
+                null)).thenReturn(mockFutureRestResponse(200, null));
+    }
+
+    @BeforeClass
+    public void init(){
+        this.dc.loadConf(null);
+
+    }
 
     @Test
     public void testBasicCompositionFromStream(){
@@ -60,7 +104,6 @@ public class Composition020Test {
         Config daemonConf = new Config();
         daemonConf.put(Config.STORM_LOCAL_MODE_ZMQ, false);
         mkClusterParam.setDaemonConf(daemonConf);
-
         Testing.withSimulatedTimeLocalCluster(mkClusterParam, new TestJob() {
             @Override
             public void run(ILocalCluster cluster) throws Exception {
@@ -71,10 +114,8 @@ public class Composition020Test {
                 ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
                 ObjectMapper mapper = new ObjectMapper();
-                DispatcherContext dc = new DispatcherContext();
-                dc.loadConf(null);
 
-                String opid = "someopid";
+                String opid = "opid";
 
                 SO so = mapper.readValue(new File(cl.getResource("0.2.0/so-basic.json").toURI()), SO.class);
                 String soStr = mapper.writeValueAsString(so);
@@ -87,27 +128,34 @@ public class Composition020Test {
                 // Mocking up the rest calls...
                 RestClient restClient = mock(RestClient.class, withSettings().serializable());
                 // store new SUs
-                when(restClient.restRequest(
-                        any(String.class),
-                        any(String.class), eq(RestClient.PUT),
-                        any(Map.class))).thenReturn(new RestResponse("", 200));
+                mockCorrectPut(restClient);
+
                 // get opid
-                when(restClient.restRequest(
-                        dc.restBaseURL
-                                + "private/opid/" + opid, null,
-                        RestClient.GET,
-                        null)).thenReturn(new RestResponse("", 200));
+                mockCorrectGetOpid(restClient);
+
                 // get subscriptions
                 when(restClient.restRequest(
                         dc.restBaseURL
                                 + "private/" + so.getId() + "/streams/A"
                                 + "/subscriptions/", null, RestClient.GET,
-                        null)).thenReturn(new RestResponse(null, 204));
+                        null)).thenReturn(new FutureRestResponse(null) {
+                            @Override
+                            public RestResponse get() {
+                                return new RestResponse(null, 204);
+                            }
+                        }
+                );
                 // get so
                 when(restClient.restRequest(
                         dc.restBaseURL
                                 + "private/" + so.getId(), null, RestClient.GET,
-                        null)).thenReturn(new RestResponse(soStr, 200));
+                        null)).thenReturn(new FutureRestResponse(null) {
+                            @Override
+                            public RestResponse get() {
+                                return new RestResponse(soStr, 200);
+                            }
+                        }
+                );
                 // get SU
                 when(restClient.restRequest(
                         dc.restBaseURL
