@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/ 
-package com.servioticy.servicedispatcher;
+package com.servioticy.dispatcher;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
@@ -21,7 +21,6 @@ package com.servioticy.servicedispatcher;
  */
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 //@SuiteClasses({Composition010Test.class, Composition020Test.class})
