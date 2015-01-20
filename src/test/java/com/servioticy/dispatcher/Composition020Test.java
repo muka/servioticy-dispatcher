@@ -33,6 +33,7 @@ import com.servioticy.datamodel.sensorupdate.SensorUpdate;
 //import com.servioticy.dispatcher.UpdateDescriptorScheme;
 import com.servioticy.dispatcher.bolts.*;
 import com.servioticy.queueclient.QueueClient;
+import com.servioticy.queueclient.QueueClientException;
 import com.servioticy.restclient.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
@@ -58,18 +59,20 @@ import static org.mockito.Mockito.*;
 */
 public class Composition020Test {
     private static final String OPID = "opid";
-    private DispatcherContext dc;
+
+    private static String SO_BASIC;
+    private static String SU_A;
+
+    private static DispatcherContext dc;
+    private static ObjectMapper mapper;
+    private static QueueClient qc;
 
     private static String readFile(String path) throws IOException {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         byte[] encoded = Files.readAllBytes(Paths.get(cl.getResource(path).getPath()));
         return new String(encoded, StandardCharsets.UTF_8);
     }
-    static private FutureRestResponse mockFutureRestResponse(int resCode, String resBodyFile) throws Exception{
-        String resBody = "";
-        if(resBodyFile != null){
-            resBody = readFile(resBodyFile);
-        }
+    static private FutureRestResponse mockFutureRestResponse(int resCode, String resBody) {
         return new FutureRestResponse(new RestResponse(resBody, resCode)) {
                                       @Override
                                       public RestResponse get() {
@@ -83,18 +86,71 @@ public class Composition020Test {
                 any(String.class), eq(RestClient.PUT),
                 any(Map.class))).thenReturn(mockFutureRestResponse(202, null));
     }
-    private void mockCorrectGetOpid(RestClient restClient) throws Exception {
+    private void mockCorrectGetOpid(RestClient restClient, String opid) throws Exception {
         when(restClient.restRequest(
                 dc.restBaseURL
-                        + "private/opid/" + OPID, null,
+                        + "private/opid/" + opid, null,
                 RestClient.GET,
                 null)).thenReturn(mockFutureRestResponse(200, null));
     }
 
-    @BeforeClass
-    public void init(){
-        this.dc.loadConf(null);
+    private void mockEmptyGetSubscriptions(RestClient restClient, String soId, String streamId) throws Exception {
+        when(restClient.restRequest(
+                dc.restBaseURL
+                        + "private/" + soId + "/streams/" + streamId
+                        + "/subscriptions/", null, RestClient.GET,
+                null)).thenReturn(mockFutureRestResponse(204, null));
+    }
 
+    private void mockCorrectGetSO(RestClient restClient, String soId, String soStr) throws Exception {
+        when(restClient.restRequest(
+                        dc.restBaseURL
+                                + "private/" + soId, null, RestClient.GET,
+                        null)).thenReturn(mockFutureRestResponse(200, soStr));
+    }
+
+    private void mockCorrectGetGroupSU(RestClient restClient, String group, String suStr) throws Exception {
+        when(restClient.restRequest(
+                dc.restBaseURL
+                        + "private/groups/lastUpdate", mapper.writeValueAsString(group),
+                RestClient.POST,
+                null)).thenReturn(mockFutureRestResponse(200, suStr));
+    }
+
+    private void mockEmptyGetStreamSU(RestClient restClient, String soId, String streamId) throws Exception {
+        when(restClient.restRequest(
+                dc.restBaseURL
+                        + "private/" + soId + "/streams/" + streamId + "/lastUpdate",
+                null, RestClient.GET,
+                null)).thenReturn(mockFutureRestResponse(204, null));
+    }
+
+    private void setupBuilder(TopologyBuilder builder, RestClient restClient){
+        builder.setSpout("dispatcher", new KestrelThriftSpout(Arrays.asList(dc.kestrelAddresses), dc.kestrelPort, dc.kestrelQueue, new UpdateDescriptorScheme()), 8);
+
+        builder.setBolt("prepare", new PrepareBolt(dc,restClient))
+                .shuffleGrouping("dispatcher");
+
+        builder.setBolt("subretriever", new SubscriptionRetrieveBolt(dc,restClient))
+                .shuffleGrouping("prepare", "subscription");
+
+        builder.setBolt("streamdispatcher", new StreamDispatcherBolt(dc,restClient))
+                .shuffleGrouping("subretriever", "internalSub")
+                .shuffleGrouping("prepare", "stream");
+        builder.setBolt("streamprocessor", new StreamProcessorBolt(dc,qc,restClient))
+                .shuffleGrouping("streamdispatcher", "default");
+    }
+
+    @BeforeClass
+    public static void init() throws QueueClientException, IOException {
+        dc = new DispatcherContext();
+        dc.loadConf(null);
+        mapper = new ObjectMapper();
+        qc = QueueClient.factory("queue-simple.xml");
+        qc.connect();
+
+        SO_BASIC = readFile("0.2.0/so-basic.json");
+        SU_A = readFile("0.2.0/su-A.json");
     }
 
     @Test
@@ -104,93 +160,50 @@ public class Composition020Test {
         Config daemonConf = new Config();
         daemonConf.put(Config.STORM_LOCAL_MODE_ZMQ, false);
         mkClusterParam.setDaemonConf(daemonConf);
+        Testing.with
         Testing.withSimulatedTimeLocalCluster(mkClusterParam, new TestJob() {
             @Override
             public void run(ILocalCluster cluster) throws Exception {
                 TopologyBuilder builder = new TopologyBuilder();
-                QueueClient qc = QueueClient.factory("queue-simple.xml");
-                qc.connect();
 
-                ClassLoader cl = Thread.currentThread().getContextClassLoader();
-
-                ObjectMapper mapper = new ObjectMapper();
-
-                String opid = "opid";
-
-                SO so = mapper.readValue(new File(cl.getResource("0.2.0/so-basic.json").toURI()), SO.class);
-                String soStr = mapper.writeValueAsString(so);
-                SensorUpdate suA = mapper.readValue(new File(cl.getResource("0.2.0/su-A.json").toURI()), SensorUpdate.class);
-                suA.setLastUpdate(2);
-                String suAStr = mapper.writeValueAsString(suA);
-                SensorUpdate suGroup = mapper.readValue(new File(cl.getResource("0.2.0/su-group.json").toURI()), SensorUpdate.class);
-                String suGroupStr = mapper.writeValueAsString(suGroup);
+                SO so = mapper.readValue(SO_BASIC, SO.class);
+                SensorUpdate su = mapper.readValue(SU_A, SensorUpdate.class);
+                su.setLastUpdate(2);
+                String suStr = mapper.writeValueAsString(su);
 
                 // Mocking up the rest calls...
                 RestClient restClient = mock(RestClient.class, withSettings().serializable());
-                // store new SUs
                 mockCorrectPut(restClient);
+                mockCorrectGetOpid(restClient, OPID);
+                mockEmptyGetSubscriptions(restClient, so.getId(), "A");
+                mockCorrectGetSO(restClient, so.getId(), SO_BASIC);
+                mockCorrectGetGroupSU(restClient, mapper.writeValueAsString(so.getGroups().get("group")), suStr);
+                mockEmptyGetStreamSU(restClient, so.getId(), "B");
 
-                // get opid
-                mockCorrectGetOpid(restClient);
+                setupBuilder(builder, restClient);
 
-                // get subscriptions
-                when(restClient.restRequest(
-                        dc.restBaseURL
-                                + "private/" + so.getId() + "/streams/A"
-                                + "/subscriptions/", null, RestClient.GET,
-                        null)).thenReturn(new FutureRestResponse(null) {
-                            @Override
-                            public RestResponse get() {
-                                return new RestResponse(null, 204);
-                            }
-                        }
-                );
-                // get so
-                when(restClient.restRequest(
-                        dc.restBaseURL
-                                + "private/" + so.getId(), null, RestClient.GET,
-                        null)).thenReturn(new FutureRestResponse(null) {
-                            @Override
-                            public RestResponse get() {
-                                return new RestResponse(soStr, 200);
-                            }
-                        }
-                );
-                // get SU
-                when(restClient.restRequest(
-                        dc.restBaseURL
-                                + "private/groups/lastUpdate", mapper.writeValueAsString(so.getGroups().get("group")),
-                        RestClient.POST,
-                        null)).thenReturn(new RestResponse(suGroupStr, 200));
-
-                when(restClient.restRequest(
-                        dc.restBaseURL
-                                + "private/" + so.getId() + "/streams/B/lastUpdate",
-                        null, RestClient.GET,
-                        null)).thenReturn(new RestResponse(null, 204));
-
-                builder.setSpout("dispatcher", new KestrelThriftSpout(Arrays.asList(dc.kestrelAddresses), dc.kestrelPort, dc.kestrelQueue, new UpdateDescriptorScheme()), 8);
-
-                builder.setBolt("prepare", new PrepareBolt(dc,restClient))
-                        .shuffleGrouping("dispatcher");
-
-                builder.setBolt("subretriever", new SubscriptionRetrieveBolt(dc,restClient))
-                        .shuffleGrouping("prepare", "subscription");
-
-                builder.setBolt("streamdispatcher", new StreamDispatcherBolt(dc,restClient))
-                        .shuffleGrouping("subretriever", "internalSub")
-                        .shuffleGrouping("prepare", "stream");
-                builder.setBolt("streamprocessor", new StreamProcessorBolt(dc,qc,restClient))
-                        .shuffleGrouping("streamdispatcher", "default");
                 StormTopology topology = builder.createTopology();
 
                 // prepare the mock data
                 MockedSources mockedSources = new MockedSources();
-                mockedSources.addMockData("dispatcher", new Values(opid, so.getId(), "A", suAStr));
+                mockedSources.addMockData("dispatch///*******************************************************************************
+// * Copyright 2014 Barcelona Supercomputing Center (BSC)
+// *
+// * Licensed under the Apache License, Version 2.0 (the "License");
+// * you may not use this file except in compliance with the License.
+// * You may obtain a copy of the License at
+// *
+// *   http://www.apache.org/licenses/LICENSE-2.0
+// *
+// * Unless required by applicable law or agreed to in writing, software
+// * distributed under the License is distributed on an "AS IS" BASIS,
+// * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// * See the License for the specific language governing permissions and
+// * limitations under the License.
+// ******************************************************************************/er", new Values(OPID, so.getId(), "A", suStr));
 
                 // prepare the config
                 Config conf = new Config();
-                conf.setNumWorkers(2);
 
                 CompleteTopologyParam completeTopologyParam = new CompleteTopologyParam();
                 completeTopologyParam.setMockedSources(mockedSources);
@@ -200,26 +213,26 @@ public class Composition020Test {
                         completeTopologyParam);
 
                 // check whether the result is right
-                Assert.assertTrue(Testing.multiseteq(new Values(new Values(opid, so.getId(), "A", suAStr)),
+                Assert.assertTrue(Testing.multiseteq(new Values(new Values(OPID, so.getId(), "A", suStr)),
                         Testing.readTuples(result, "dispatcher", "default")));
 
-                Assert.assertTrue(Testing.multiseteq(new Values(new Values("A", so.getId(), suAStr)),
+                Assert.assertTrue(Testing.multiseteq(new Values(new Values("A", so.getId(), suStr)),
                         Testing.readTuples(result, "prepare", "stream")));
 
-                Assert.assertTrue(Testing.multiseteq(new Values(new Values(so.getId(), "A", suAStr)),
+                Assert.assertTrue(Testing.multiseteq(new Values(new Values(so.getId(), "A", suStr)),
                         Testing.readTuples(result, "prepare", "subscription")));
 
                 Assert.assertTrue(Testing.multiseteq(new Values(new Values(so.getId(),
                                 "B",
-                                soStr,
+                                SO_BASIC,
                                 "A",
-                                suAStr)),
+                                suStr)),
                         Testing.readTuples(result, "streamdispatcher", "default")));
 
                 String newDescriptor;
                 int i = 0;
-                while((newDescriptor = (String) qc.get()) == null){
-                    if(i==40){
+                while ((newDescriptor = (String) qc.get()) == null) {
+                    if (i == 40) {
                         qc.disconnect();
                         Assert.fail("Timeout");
                     }
@@ -241,7 +254,7 @@ public class Composition020Test {
                 Assert.assertTrue("Origin stream id", ud.getStreamid().equals("B"));
                 Assert.assertTrue("New SU timestamp", ud.getSu().getLastUpdate() == 2);
                 SUChannel suCh = ud.getSu().getChannels().get("$");
-                double cValue = (Double)suCh.getCurrentValue();
+                double cValue = (Double) suCh.getCurrentValue();
                 Assert.assertTrue("New SU current-value", cValue == 2);
 
             }

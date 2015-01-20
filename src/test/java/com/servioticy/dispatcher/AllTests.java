@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
-//@SuiteClasses({Composition010Test.class, Composition020Test.class})
+@Suite.SuiteClasses({Composition020Test.class})
 public class AllTests {
 
 }
