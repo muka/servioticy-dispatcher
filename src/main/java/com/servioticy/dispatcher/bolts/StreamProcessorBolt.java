@@ -54,15 +54,10 @@ public class StreamProcessorBolt implements IRichBolt {
 	private static final long serialVersionUID = 1L;
 	private OutputCollector collector;
 	private TopologyContext context;
-	private SUCache suCache;
 	private QueueClient qc;
 	private RestClient restClient;
     private DispatcherContext dc;
     private ObjectMapper mapper;
-
-    public StreamProcessorBolt(){
-		
-	}
 	
 	// For testing purposes
 	public StreamProcessorBolt(DispatcherContext dc, QueueClient qc, RestClient restClient){
@@ -73,6 +68,7 @@ public class StreamProcessorBolt implements IRichBolt {
     public StreamProcessorBolt(DispatcherContext dc, RestClient restClient){
         this.restClient = restClient;
         this.dc = dc;
+
         String kestrelAddresses = "";
         for (String addr : dc.kestrelAddresses) {
             kestrelAddresses += addr + ":" + dc.kestrelPort + " ";
@@ -97,7 +93,6 @@ public class StreamProcessorBolt implements IRichBolt {
         this.mapper = new ObjectMapper();
 		this.collector = collector;
 		this.context = context;
-		this.suCache = new SUCache(25);
         try {
             if (this.qc == null) {
                 qc = QueueClient.factory();
