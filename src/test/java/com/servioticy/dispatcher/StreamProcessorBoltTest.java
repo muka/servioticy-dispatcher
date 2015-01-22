@@ -24,6 +24,7 @@ import com.servioticy.datamodel.UpdateDescriptor;
 import com.servioticy.datamodel.sensorupdate.SUChannel;
 import com.servioticy.datamodel.sensorupdate.SensorUpdate;
 import com.servioticy.datamodel.serviceobject.SO;
+import com.servioticy.datamodel.serviceobject.SO020;
 import com.servioticy.dispatcher.bolts.StreamProcessorBolt;
 import com.servioticy.queueclient.QueueClient;
 import com.servioticy.restclient.*;

@@ -23,6 +23,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.servioticy.datamodel.UpdateDescriptor;
@@ -88,8 +89,7 @@ public class StreamProcessorBolt implements IRichBolt {
         this(dc, (RestClient) null);
     }
 	
-	public void prepare(Map stormConf, TopologyContext context,
-			OutputCollector collector) {
+	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         this.mapper = new ObjectMapper();
 		this.collector = collector;
 		this.context = context;
@@ -108,7 +108,9 @@ public class StreamProcessorBolt implements IRichBolt {
 		}
 	}
 
-    private Map<String, SensorUpdate> getGroupSUs(Map<String, FutureRestResponse> rrs) throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException, InterruptedException {
+    private Map<String, SensorUpdate> getGroupSUs(Map<String, FutureRestResponse> rrs)
+            throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException,
+            InterruptedException {
 		Map<String, SensorUpdate> groupDocs = new HashMap<String, SensorUpdate>();
 
         for(Map.Entry<String, FutureRestResponse> frrEntry: rrs.entrySet()){
@@ -139,7 +141,8 @@ public class StreamProcessorBolt implements IRichBolt {
 		return groupDocs;
 	}
 
-    private Map<String, FutureRestResponse> getGroupSUAsyncResponses(Set<String>  groupIds, SO so) throws RestClientException, RestClientErrorCodeException, JsonProcessingException {
+    private Map<String, FutureRestResponse> getGroupSUAsyncResponses(Set<String>  groupIds, SO so)
+            throws RestClientException, RestClientErrorCodeException, JsonProcessingException {
         Map<String, FutureRestResponse> rrs = new HashMap();
         if(so.getGroups() == null){
             return rrs;
@@ -154,7 +157,8 @@ public class StreamProcessorBolt implements IRichBolt {
         return rrs;
     }
 
-    private FutureRestResponse getGroupSUAsyncResponse(String groupId, SO so) throws RestClientException, RestClientErrorCodeException, JsonProcessingException {
+    private FutureRestResponse getGroupSUAsyncResponse(String groupId, SO so)
+            throws RestClientException, RestClientErrorCodeException, JsonProcessingException {
         FutureRestResponse frr;
 
         SOGroup group = so.getGroups().get(groupId);
@@ -170,7 +174,9 @@ public class StreamProcessorBolt implements IRichBolt {
         return frr;
     }
 
-    private Map<String, SensorUpdate> getStreamSUs(Map<String, FutureRestResponse> frrs) throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException, InterruptedException {
+    private Map<String, SensorUpdate> getStreamSUs(Map<String, FutureRestResponse> frrs)
+            throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException,
+            InterruptedException {
         Map<String, SensorUpdate> streamDocs = new HashMap<String, SensorUpdate>();
 
         for(Map.Entry<String, FutureRestResponse> frrEntry: frrs.entrySet()) {
@@ -182,11 +188,12 @@ public class StreamProcessorBolt implements IRichBolt {
 		return streamDocs;
 	}
 
-    private Map<String, FutureRestResponse> getStreamSUAsyncResponses(Set<String> streamIds, SO so) throws RestClientException, RestClientErrorCodeException {
+    private Map<String, FutureRestResponse> getStreamSUAsyncResponses(Set<String> streamIds, SO so)
+            throws RestClientException, RestClientErrorCodeException, JsonGenerationException {
         Map<String, FutureRestResponse> rrs = new HashMap();
         Map<String, SensorUpdate> streamDocs = new HashMap<String, SensorUpdate>();
         for(String streamId: streamIds){
-            if(!so.getStreams().containsKey(streamId)){
+            if(!so.getStreams(mapper).containsKey(streamId)){
                 continue;
             }
 
@@ -195,7 +202,9 @@ public class StreamProcessorBolt implements IRichBolt {
         return rrs;
     }
     
-    private SensorUpdate getStreamSU(FutureRestResponse frr) throws RestClientErrorCodeException, IOException, RestClientException, ExecutionException, InterruptedException {
+    private SensorUpdate getStreamSU(FutureRestResponse frr)
+            throws RestClientErrorCodeException, IOException, RestClientException, ExecutionException,
+            InterruptedException {
         RestResponse rr;
         try {
             rr = frr.get();
@@ -214,7 +223,8 @@ public class StreamProcessorBolt implements IRichBolt {
         return this.mapper.readValue(rr.getResponse(), SensorUpdate.class);
     }
 	
-    private FutureRestResponse getStreamSUAsyncResponse(String streamId, SO so) throws RestClientException, RestClientErrorCodeException {
+    private FutureRestResponse getStreamSUAsyncResponse(String streamId, SO so)
+            throws RestClientException, RestClientErrorCodeException {
         FutureRestResponse frr;
         frr = restClient.restRequest(
                 dc.restBaseURL
@@ -404,8 +414,6 @@ public class StreamProcessorBolt implements IRichBolt {
             collector.ack(input);
             return;
         }
-
-        //suCache.put(soId+";"+streamId, su.getLastUpdate());
         collector.ack(input);
         return;
 	}
