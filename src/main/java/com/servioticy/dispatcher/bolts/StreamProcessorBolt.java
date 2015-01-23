@@ -330,7 +330,6 @@ public class StreamProcessorBolt implements IRichBolt {
                     collector.ack(input);
                     return;
                 }
-                resultSUDoc = this.mapper.writeValueAsString(resultSU);
 
             } catch (ScriptException e) {
                 // TODO Log the error
@@ -348,7 +347,6 @@ public class StreamProcessorBolt implements IRichBolt {
                 resultSU.getTriggerPath().add(new ArrayList<String>(Arrays.asList(fromStr)));
                 resultSU.getPathTimestamps().add(System.currentTimeMillis());
             }
-
 
             resultSUDoc = this.mapper.writeValueAsString(resultSU);
 

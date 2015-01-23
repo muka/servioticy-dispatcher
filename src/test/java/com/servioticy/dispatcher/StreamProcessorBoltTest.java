@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -62,13 +64,18 @@ public class StreamProcessorBoltTest {
         return new String(encoded, StandardCharsets.UTF_8);
     }
 
-    static private FutureRestResponse mockFutureRestResponse(int resCode, String resBody) {
-        return new FutureRestResponse(new RestResponse(resBody, resCode)) {
-                                      @Override
-                                      public RestResponse get() {
-                                          return this.restResponse;
-                                      }
-                                  };
+    static private FutureRestResponse mockFutureRestResponse(int resCode, String resBody)
+            throws InterruptedException, ExecutionException, RestClientException, RestClientErrorCodeException {
+        RestResponse rr = new RestResponse(resBody, resCode);
+        FutureRestResponse futureRestResponse = mock(FutureRestResponse.class, withSettings().serializable());
+        when(futureRestResponse.get()).thenReturn(rr);
+        return futureRestResponse;
+//        return new FutureRestResponse(new RestResponse(resBody, resCode)) {
+//                                      @Override
+//                                      public RestResponse get() {
+//                                          return this.restResponse;
+//                                      }
+//                                  };
     }
 
     private void mockEmptyGetStreamSU(DispatcherContext dc, RestClient restClient, String soId, String streamId) throws Exception {
@@ -95,7 +102,7 @@ public class StreamProcessorBoltTest {
     }
 
     @Test
-    public void testExecute() throws IOException, RestClientException, RestClientErrorCodeException {
+    public void testExecute() throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException, InterruptedException {
         final OutputCollector collector = mock(OutputCollector.class, withSettings().serializable());
         final Tuple tuple = mock(Tuple.class, withSettings().serializable());
         final DispatcherContext dc = mock(DispatcherContext.class, withSettings().serializable());
@@ -113,17 +120,19 @@ public class StreamProcessorBoltTest {
 
         dc.restBaseURL = "localhost/";
 
+        FutureRestResponse futureRestResponse = mockFutureRestResponse(204, null);
         when(restClient.restRequest(
                 dc.restBaseURL
-                        + "private/" + so.getId() + "/streams/A/lastUpdate",
+                        + "private/" + so.getId() + "/streams/B/lastUpdate",
                 null, RestClient.GET,
-                null)).thenReturn(mockFutureRestResponse(204, null)
-        );
+                null)).thenReturn(futureRestResponse);
+
+        futureRestResponse = mockFutureRestResponse(200, SU_A);
         when(restClient.restRequest(
                 dc.restBaseURL
                         + "private/groups/lastUpdate", mapper.writeValueAsString(so.getGroups().get("group")),
                 RestClient.POST,
-                null)).thenReturn(mockFutureRestResponse(200, SU_A));
+                null)).thenReturn(futureRestResponse);
 
         when(qc.isConnected()).thenReturn(true);
         when(qc.put(anyObject())).then(new Answer<Boolean>() {
@@ -138,7 +147,7 @@ public class StreamProcessorBoltTest {
                 Assert.assertTrue("New SU timestamp", ud.getSu().getLastUpdate() == suB.getLastUpdate());
                 SUChannel suCh = ud.getSu().getChannels().get("$");
                 double cValue = (Double) suCh.getCurrentValue();
-                Assert.assertTrue("New SU current-value", cValue == cValue*2);
+                Assert.assertTrue("New SU current-value", cValue == 2.0);
 
                 return true;
             }
