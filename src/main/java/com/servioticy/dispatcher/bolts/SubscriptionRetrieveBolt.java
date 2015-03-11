@@ -130,6 +130,11 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
                                     suDoc,
                                     streamid)
                     );
+                } else if (subscription.getClass().equals(AggregateSubscription.class)) {
+                    this.collector.emit("AggregatorSub", input,
+                            new Values(subscription.getDestination(),
+                                    suDoc)
+                    );
                 }
             }
         } catch (RestClientErrorCodeException e) {
