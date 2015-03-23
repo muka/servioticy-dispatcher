@@ -1,18 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *****************************************************************************
+ */
 package com.servioticy.dispatcher;
 
 import backtype.storm.Config;
@@ -42,7 +44,7 @@ public class DispatcherTopology {
     public static void main(String[] args) throws AlreadyAliveException, InvalidTopologyException, InterruptedException, ParseException {
 
         Options options = new Options();
-        
+
         options.addOption(OptionBuilder.withArgName("file")
                 .hasArg()
                 .withDescription("Config file path.")
@@ -54,8 +56,10 @@ public class DispatcherTopology {
         options.addOption(OptionBuilder
                 .withDescription("Enable debugging")
                 .create("d"));
+        options.addOption(OptionBuilder
+                .withDescription("Enable topology debugging")
+                .create("v"));
 
-        
         CommandLineParser parser = new GnuParser();
         CommandLine cmd = parser.parse(options, args);
 
@@ -66,7 +70,7 @@ public class DispatcherTopology {
 
         DispatcherContext dc = new DispatcherContext();
         dc.loadConf(path);
-                
+
         TopologyBuilder builder = new TopologyBuilder();
 
         // TODO Auto-assign workers to the spout in function of the number of Kestrel IPs
@@ -77,7 +81,7 @@ public class DispatcherTopology {
                 .shuffleGrouping("updates");
 
         builder.setBolt("actuationdispatcher", new ActuationDispatcherBolt(dc))
-        		.shuffleGrouping("actions");
+                .shuffleGrouping("actions");
 
         builder.setBolt("subretriever", new SubscriptionRetrieveBolt(dc))
                 .shuffleGrouping("prepare", "subscription");
@@ -103,6 +107,9 @@ public class DispatcherTopology {
 
         Config conf = new Config();
         conf.setDebug(cmd.hasOption("d"));
+
+        conf.put(Config.TOPOLOGY_DEBUG, cmd.hasOption("v"));
+
         if (cmd.hasOption("t")) {
             StormSubmitter.submitTopology(cmd.getOptionValue("t"), conf, builder.createTopology());
         } else {
