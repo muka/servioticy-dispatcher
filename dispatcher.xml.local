@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<context>
+    <servioticyAPI>http://localhost:8080/</servioticyAPI>
+    <benchmark>false</benchmark>
+    <benchResultsDir>~</benchResultsDir>
+    <spouts>
+        <updates>
+            <name>services</name>
+            <addresses>
+                <address>localhost</address>
+            </addresses>
+            <port>2229</port>
+        </updates>
+        <actions>
+            <name>actions</name>
+            <addresses>
+                <address>localhost</address>
+            </addresses>
+            <port>2229</port>
+        </actions>
+    </spouts>
+	<publishers>
+		<external>
+			<name>servioticy</name>
+			<address>tcp://localhost</address>
+			<port>1833</port>
+			<username>compose</username>
+			<password>shines</password>
+			<class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
+		</external>
+		<internal>
+			<name>servioticy</name>
+			<address>tcp://localhost</address>
+			<port>1833</port>
+			<username>compose</username>
+			<password>shines</password>
+			<class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
+		</internal>
+        <actions>
+            <name>servioticy</name>
+            <address>tcp://localhost</address>
+            <port>1833</port>
+            <username>compose</username>
+            <password>shines</password>
+            <class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
+        </actions>
+	</publishers>
+	
+</context>
+
