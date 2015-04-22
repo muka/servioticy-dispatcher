@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <context>
-    <servioticyAPI>http://localhost:8080/</servioticyAPI>
+    <servioticyAPI>http://localhost:8070/</servioticyAPI>
     <benchmark>false</benchmark>
     <benchResultsDir>~</benchResultsDir>
     <spouts>
@@ -29,7 +29,7 @@
 	<publishers>
 		<external>
 			<name>servioticy</name>
-			<address>tcp://localhost</address>
+			<address>tcp://servioticy.local</address>
 			<port>1833</port>
 			<username>compose</username>
 			<password>shines</password>
@@ -37,7 +37,7 @@
 		</external>
 		<internal>
 			<name>servioticy</name>
-			<address>tcp://localhost</address>
+			<address>tcp://servioticy.local</address>
 			<port>1833</port>
 			<username>compose</username>
 			<password>shines</password>
@@ -45,7 +45,7 @@
 		</internal>
         <actions>
             <name>servioticy</name>
-            <address>tcp://localhost</address>
+            <address>tcp://servioticy.local</address>
             <port>1833</port>
             <username>compose</username>
             <password>shines</password>
@@ -54,7 +54,7 @@
 	</publishers>
     <storage>
         <addresses>
-            <address>http://localhost:8091/pools</address>
+            <address>http://servioticy.local:8091/pools</address>
         </addresses>
         <buckets>
             <reputation>reputation</reputation>

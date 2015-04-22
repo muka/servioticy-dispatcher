@@ -6,26 +6,30 @@
     <version>0.4.3-security-SNAPSHOT</version>
     <name>dispatcher</name>
     <repositories>
+
         <repository>
             <id>clojars.org</id>
             <url>http://clojars.org/repo</url>
         </repository>
+
         <repository>
-        	<id>paho-releases</id>
-        	<name>Paho</name>
-        	<url>https://repo.eclipse.org/content/repositories/paho-releases</url>
+            <id>paho-releases</id>
+            <name>Paho</name>
+            <url>https://repo.eclipse.org/content/repositories/paho-releases</url>
         </repository>
+
         <repository>
             <id>project.local</id>
             <name>project</name>
             <url>file:${project.basedir}/repo</url>
         </repository>
+
     </repositories>
     <dependencies>
         <dependency>
             <groupId>org.apache.storm</groupId>
             <artifactId>storm-core</artifactId>
-            <version>0.9.2-incubating</version>
+            <version>0.9.3</version>
             <!-- keep storm out of the jar-with-dependencies -->
             <scope>provided</scope>
         </dependency>
@@ -66,25 +70,10 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.servioticy</groupId>
-            <artifactId>queue-client</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>1.9.5</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.servioticy</groupId>
-            <artifactId>datamodel</artifactId>
-            <version>0.4.1-security-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.servioticy</groupId>
-            <artifactId>restclient</artifactId>
-            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.elasticsearch</groupId>
@@ -102,14 +91,29 @@
             <version>1.7R4-mod-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>de.passau.uni</groupId>
-            <artifactId>servioticy-pdp</artifactId>
-            <version>0.1.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>datamodel</artifactId>
+            <version>0.4.1-security-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>queue-client</artifactId>
+            <version>0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>restclient</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>de.passau.uni.sec.compose</groupId>
+            <artifactId>servioticy-pdp-maven</artifactId>
+            <version>0.1.0</version>
         </dependency>
     </dependencies>
     <build>
