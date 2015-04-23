@@ -16,3 +16,5 @@
 /depsrc
 /repo
 libs/*
+dispatcher.xml
+
