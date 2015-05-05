@@ -57,7 +57,7 @@ public class StreamDispatcherBolt implements IRichBolt {
     private RestClient restClient;
     private DispatcherContext dc;
     private ObjectMapper mapper;
-    private PDP pdp;
+//    private PDP pdp;
 
     public StreamDispatcherBolt(DispatcherContext dc){
         this.dc = dc;
@@ -77,13 +77,13 @@ public class StreamDispatcherBolt implements IRichBolt {
         if(restClient == null){
             restClient = new RestClient();
         }
-        pdp = new LocalPDP();
-
-        // TODO Fill these fields properly
-        pdp.setIdmHost("");
-        pdp.setIdmPort(0);
-        pdp.setIdmUser("");
-        pdp.setIdmPassword("");
+//        pdp = new LocalPDP();
+//
+//        // TODO Fill these fields properly
+//        pdp.setIdmHost("");
+//        pdp.setIdmPort(0);
+//        pdp.setIdmUser("");
+//        pdp.setIdmPassword("");
     }
 
     public void execute(Tuple input) {
@@ -140,19 +140,21 @@ public class StreamDispatcherBolt implements IRichBolt {
 //                if (beenThere) {
 //                    continue;
 //                }
-                PermissionCacheObject pco = new PermissionCacheObject();
-                pco.setStream(streamIdByDoc);
-                pco = this.pdp.checkAuthorization(null, mapper.readTree(mapper.writeValueAsString(so.getSecurity())), mapper.readTree(mapper.writeValueAsString(su.getSecurity())), pco,
-                        PDP.operationID.DispatchData);
-                if(!pco.isPermission()){
-                    // TODO Needs logging
-                    if (dc.benchmark) this.collector.emit("benchmark", input,
-                            new Values(suDoc,
-                                    System.currentTimeMillis(),
-                                    "forbidden")
-                    );
-                    continue;
-                }
+
+//                PermissionCacheObject pco = new PermissionCacheObject();
+//                pco.setStream(streamIdByDoc);
+//                pco = this.pdp.checkAuthorization(null, mapper.readTree(mapper.writeValueAsString(so.getSecurity())), mapper.readTree(mapper.writeValueAsString(su.getSecurity())), pco,
+//                        PDP.operationID.DispatchData);
+//                if(!pco.isPermission()){
+//                    // TODO Needs logging
+//                    if (dc.benchmark) this.collector.emit("benchmark", input,
+//                            new Values(suDoc,
+//                                    System.currentTimeMillis(),
+//                                    "forbidden")
+//                    );
+//                    continue;
+//                }
+
                 this.collector.emit("default", input,
                         new Values(destination,
                                 streamIdByDoc,

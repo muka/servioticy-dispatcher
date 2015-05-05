@@ -5,6 +5,7 @@
     <artifactId>dispatcher</artifactId>
     <version>0.4.3-security-SNAPSHOT</version>
     <name>dispatcher</name>
+
     <repositories>
 
         <repository>
@@ -25,6 +26,7 @@
         </repository>
 
     </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.storm</groupId>
@@ -116,7 +118,9 @@
             <version>0.1.0</version>
         </dependency>
     </dependencies>
+
     <build>
+
         <testSourceDirectory>src/test/java</testSourceDirectory>
         <testResources>
             <testResource>
