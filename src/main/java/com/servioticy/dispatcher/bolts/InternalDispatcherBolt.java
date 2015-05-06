@@ -48,7 +48,7 @@ public class InternalDispatcherBolt implements IRichBolt {
     private DispatcherContext dc;
     private static Logger LOG = Logger.getLogger(InternalDispatcherBolt.class);
     private ObjectMapper mapper;
-    private PDP pdp;
+//    private PDP pdp;
 
     public InternalDispatcherBolt(DispatcherContext dc) {
         this.dc = dc;
@@ -61,12 +61,12 @@ public class InternalDispatcherBolt implements IRichBolt {
         this.context = context;
         this.publisher = null;
         this.suCache = new SUCache(25);
-        this.pdp = new LocalPDP();
-        // Placeholders
-        this.pdp.setIdmHost("");
-        this.pdp.setIdmPort(0);
-        this.pdp.setIdmUser("");
-        this.pdp.setIdmPassword("");
+//        this.pdp = new LocalPDP();
+//        // Placeholders
+//        this.pdp.setIdmHost("");
+//        this.pdp.setIdmPort(0);
+//        this.pdp.setIdmUser("");
+//        this.pdp.setIdmPassword("");
 
         LOG.debug("Service publisher server: " + dc.internalPubAddress + ":" + dc.internalPubPort);
         LOG.debug("Service publisher user/pass: " + dc.internalPubUser + " / " + dc.internalPubPassword);
@@ -139,7 +139,7 @@ public class InternalDispatcherBolt implements IRichBolt {
 //                            internalSub.getUserId())
 //            );
 
-            
+
         } catch (Exception e) {
             LOG.error("FAIL", e);
             collector.fail(input);
