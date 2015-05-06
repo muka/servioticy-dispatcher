@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/ 
+ ******************************************************************************/
 package com.servioticy.dispatcher.bolts;
 
 import java.util.Map;
@@ -40,23 +40,21 @@ public class ActuationDispatcherBolt implements IRichBolt {
 	private DispatcherContext dc;
 	private static Logger LOG = org.apache.log4j.Logger.getLogger(ActuationDispatcherBolt.class);
 	private ObjectMapper mapper;
-	
+
 	public ActuationDispatcherBolt(DispatcherContext dc){
         this.dc = dc;
 	}
-	
-	
+
+
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		this.mapper = new ObjectMapper();
 		this.collector = collector;
 		this.context = context;
 		this.publisher = null;
-		
+
 		LOG.debug("MQTT server: " + dc.actionsPubAddress + ":" + dc.actionsPubPort);
 		LOG.debug("MQTT user/pass: " + dc.actionsPubUser + " / "+dc.actionsPubPassword);
-		
-		
 
 		try {
 			publisher = Publisher.factory(dc.actionsPubClassName,
@@ -72,12 +70,12 @@ public class ActuationDispatcherBolt implements IRichBolt {
 	}
 
 	public void execute(Tuple input) {
-		
+
 		try {
 			String sourceSOId;
 			String actionId;
 			String actionName;
-			
+
 			JsonNode actuation = this.mapper.readTree(input.getStringByField("action"));
 			sourceSOId = input.getStringByField("soid");
 			actionId = input.getStringByField("id");
@@ -96,7 +94,7 @@ public class ActuationDispatcherBolt implements IRichBolt {
 			publisher.publishMessage(sourceSOId+"/actions", actuation.toString());
 			LOG.info("Actuation request pubished on topic "+sourceSOId+"/actions");
 			LOG.info("Actuation message contents: "+actuation.toString());
-			
+
 		} catch (Exception e) {
 			LOG.error("FAIL", e);
 			collector.fail(input);

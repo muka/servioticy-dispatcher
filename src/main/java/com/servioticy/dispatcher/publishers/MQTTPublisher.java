@@ -87,11 +87,13 @@ public class MQTTPublisher extends Publisher {
                     return;
                 }
 
-                LOG.info("Publish to " + topic + ":" + msg);
+                String fullTopic = topic;
+
+                LOG.info("Publish to MQTT topic " + fullTopic + ":" + msg);
 
                 MqttMessage message = new MqttMessage(msg.getBytes());
                 message.setQos(0);
-                asyncClient.publish(topic, message);//.waitForCompletion();
+                asyncClient.publish(fullTopic, message);//.waitForCompletion();
 
             } catch (Exception e) {
                 LOG.error("FAIL in publishMessage: ", e);

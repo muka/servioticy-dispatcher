@@ -132,12 +132,14 @@ public class InternalDispatcherBolt implements IRichBolt {
 
 
 
-            this.collector.emit(Reputation.STREAM_SO_SERVICE, input,
-                    new Values(sourceSOId, // in-soid
-                            streamId, // in-streamid
-                            internalSub.getDestination(),
-                            internalSub.getUserId())
-            );
+//            this.collector.emit(Reputation.STREAM_SO_SERVICE, input,
+//                    new Values(sourceSOId, // in-soid
+//                            streamId, // in-streamid
+//                            internalSub.getDestination(),
+//                            internalSub.getUserId())
+//            );
+
+            
         } catch (Exception e) {
             LOG.error("FAIL", e);
             collector.fail(input);

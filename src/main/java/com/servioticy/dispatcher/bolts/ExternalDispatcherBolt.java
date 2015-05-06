@@ -149,7 +149,7 @@ public class ExternalDispatcherBolt implements IRichBolt {
                             destTopic,
                             externalSub.getUserId())
             );
-            LOG.info("Message pubished on topic " + externalSub.getDestination() + "/" + sourceSOId + "/streams/" + streamId + "/updates");
+            LOG.info("Message pubished on topic " + destTopic);
         } catch (Exception e) {
             LOG.error("FAIL", e);
             collector.fail(input);

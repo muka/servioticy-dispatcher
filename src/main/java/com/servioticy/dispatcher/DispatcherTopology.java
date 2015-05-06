@@ -77,7 +77,7 @@ public class DispatcherTopology {
         // TODO Auto-assign workers to the spout in function of the number of Kestrel IPs
         builder.setSpout("updates", new KestrelThriftSpout(Arrays.asList(dc.updatesAddresses), dc.updatesPort, dc.updatesQueue, new UpdateDescriptorScheme()));
         builder.setSpout("actions", new KestrelThriftSpout(Arrays.asList(dc.actionsAddresses), dc.actionsPort, dc.actionsQueue, new ActuationScheme()));
-        builder.setSpout("readreputation", new KestrelThriftSpout(Arrays.asList(dc.reputationAddresses), dc.reputationPort, dc.reputationQueue, new ReputationScheme()));
+//        builder.setSpout("readreputation", new KestrelThriftSpout(Arrays.asList(dc.reputationAddresses), dc.reputationPort, dc.reputationQueue, new ReputationScheme()));
 
         builder.setBolt("prepare", new PrepareBolt(dc))
                 .shuffleGrouping("updates");
