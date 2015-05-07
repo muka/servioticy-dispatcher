@@ -114,7 +114,7 @@
         </dependency>
         <dependency>
             <groupId>de.passau.uni.sec.compose</groupId>
-            <artifactId>servioticy-pdp-maven</artifactId>
+            <artifactId>servioticy-pdp</artifactId>
             <version>0.1.0</version>
         </dependency>
     </dependencies>
