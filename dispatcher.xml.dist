@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <context>
-    <servioticyAPI>http://localhost:8070/</servioticyAPI>
+    <servioticyAPI>http://servioticy.local:8070/</servioticyAPI>
     <benchmark>false</benchmark>
     <benchResultsDir>~</benchResultsDir>
     <spouts>
         <updates>
             <name>services</name>
             <addresses>
-                <address>localhost</address>
+                <address>servioticy.local</address>
             </addresses>
             <port>2229</port>
         </updates>
         <actions>
             <name>actions</name>
             <addresses>
-                <address>localhost</address>
+                <address>servioticy.local</address>
             </addresses>
             <port>2229</port>
         </actions>
         <reputation>
             <name>reputation</name>
             <addresses>
-                <address>localhost</address>
+                <address>servioticy.local</address>
             </addresses>
             <port>2229</port>
         </reputation>
@@ -30,7 +30,7 @@
 		<external>
 			<name>servioticy</name>
 			<address>tcp://servioticy.local</address>
-			<port>1833</port>
+			<port>1883</port>
 			<username>compose</username>
 			<password>shines</password>
 			<class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
@@ -38,7 +38,7 @@
 		<internal>
 			<name>servioticy</name>
 			<address>tcp://servioticy.local</address>
-			<port>1833</port>
+			<port>1883</port>
 			<username>compose</username>
 			<password>shines</password>
 			<class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
@@ -46,7 +46,7 @@
         <actions>
             <name>servioticy</name>
             <address>tcp://servioticy.local</address>
-            <port>1833</port>
+            <port>1883</port>
             <username>compose</username>
             <password>shines</password>
             <class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
