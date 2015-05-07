@@ -41,6 +41,8 @@ public class MQTTPublisher extends Publisher {
         String uris[] = new String[1];
         uris[0] = asyncClient.getServerURI();
 
+        LOG.info("MQTT uri " + uris[0]);
+
         options.setServerURIs(uris);
         options.setUserName(username);
         options.setPassword(password.toCharArray());
