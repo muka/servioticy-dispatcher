@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
@@ -59,7 +60,7 @@ import org.apache.log4j.Logger;
  */
 public class StreamProcessorBolt implements IRichBolt {
 
-    private static Logger LOG = org.apache.log4j.Logger.getLogger(StreamProcessorBolt.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(StreamProcessorBolt.class);
 
     private static final long serialVersionUID = 1L;
     private OutputCollector collector;
@@ -126,7 +127,7 @@ public class StreamProcessorBolt implements IRichBolt {
             qc.connect();
         } catch (Exception e) {
             // TODO log error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
 
         }
         if (restClient == null) {
@@ -147,7 +148,7 @@ public class StreamProcessorBolt implements IRichBolt {
             } catch (RestClientErrorCodeException e) {
 
                 // TODO Log the error
-                LOG.error(e);
+                LOG.error(this.getClass().getName(), e);
 
 
                 if (e.getRestResponse().getHttpCode() >= 500) {
@@ -243,7 +244,7 @@ public class StreamProcessorBolt implements IRichBolt {
             rr = frr.get();
         } catch (RestClientErrorCodeException e) {
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             if (e.getRestResponse().getHttpCode() >= 500) {
                 throw e;
             }
@@ -378,7 +379,7 @@ public class StreamProcessorBolt implements IRichBolt {
                 sensorUpdates.put(originId, su);
             } catch (Exception e) {
                 // TODO Log the error
-                LOG.error(e);
+                LOG.error(this.getClass().getName(), e);
                 collector.fail(input);
                 return;
             }
@@ -408,7 +409,7 @@ public class StreamProcessorBolt implements IRichBolt {
 
             } catch (ScriptException e) {
                 // TODO Log the error
-                LOG.error(e);
+                LOG.error(this.getClass().getName(), e);
                 BenchmarkBolt.send(collector, input, dc, suDoc, "script-error");
                 collector.ack(input);
                 //Reputation
@@ -453,7 +454,7 @@ public class StreamProcessorBolt implements IRichBolt {
                 qc.disconnect();
             } catch (Exception e) {
                 // TODO Log the error
-                LOG.error(e);
+                LOG.error(this.getClass().getName(), e);
                 collector.fail(input);
                 return;
             }
@@ -475,7 +476,7 @@ public class StreamProcessorBolt implements IRichBolt {
             sendAllToReputation(input, sensorUpdates, originId, so, streamId, Reputation.DISCARD_NONE);
         } catch (RestClientErrorCodeException e) {
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
@@ -500,7 +501,7 @@ public class StreamProcessorBolt implements IRichBolt {
             this.qc.disconnect();
         } catch (QueueClientException e) {
             // TODO log error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
         }
     }
 

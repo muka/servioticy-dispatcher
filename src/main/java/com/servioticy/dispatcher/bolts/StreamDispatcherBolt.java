@@ -45,6 +45,7 @@ import de.passau.uni.sec.compose.pdp.servioticy.exception.PDPServioticyException
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
@@ -52,7 +53,7 @@ import org.apache.log4j.Logger;
  */
 public class StreamDispatcherBolt implements IRichBolt {
 
-    private static Logger LOG = org.apache.log4j.Logger.getLogger(StreamDispatcherBolt.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(StreamDispatcherBolt.class);
 
     /**
      *
@@ -175,7 +176,7 @@ public class StreamDispatcherBolt implements IRichBolt {
             }
         } catch (RestClientErrorCodeException e) {
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
@@ -185,7 +186,7 @@ public class StreamDispatcherBolt implements IRichBolt {
             return;
         } catch (Exception e) {
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;

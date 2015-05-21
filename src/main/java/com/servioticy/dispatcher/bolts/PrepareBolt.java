@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
@@ -44,7 +45,7 @@ import org.apache.log4j.Logger;
  */
 public class PrepareBolt implements IRichBolt {
 
-    private static Logger LOG = org.apache.log4j.Logger.getLogger(PrepareBolt.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(PrepareBolt.class);
 
     /**
      *
@@ -148,7 +149,7 @@ public class PrepareBolt implements IRichBolt {
         } catch (Exception e) {
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             collector.ack(input);
             return;
         }

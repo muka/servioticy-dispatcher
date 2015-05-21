@@ -30,6 +30,7 @@ import backtype.storm.tuple.Tuple;
 import com.esotericsoftware.minlog.Log;
 import com.servioticy.dispatcher.DispatcherContext;
 import com.servioticy.dispatcher.publishers.Publisher;
+import org.slf4j.LoggerFactory;
 
 public class ActuationDispatcherBolt implements IRichBolt {
 
@@ -38,7 +39,9 @@ public class ActuationDispatcherBolt implements IRichBolt {
 	private TopologyContext context;
 	private Publisher publisher;
 	private DispatcherContext dc;
-	private static Logger LOG = org.apache.log4j.Logger.getLogger(ActuationDispatcherBolt.class);
+
+        private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ActuationDispatcherBolt.class);
+
 	private ObjectMapper mapper;
 
 	public ActuationDispatcherBolt(DispatcherContext dc){
@@ -96,7 +99,7 @@ public class ActuationDispatcherBolt implements IRichBolt {
 			LOG.info("Actuation message contents: "+actuation.toString());
 
 		} catch (Exception e) {
-			LOG.error("FAIL", e);
+			LOG.error(this.getClass().getName(), e);
 			collector.fail(input);
 			return;
 		}

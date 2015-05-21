@@ -34,13 +34,14 @@ import com.servioticy.restclient.RestResponse;
 
 import java.util.Map;
 import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
  */
 public class SubscriptionRetrieveBolt implements IRichBolt {
 
-    private static Logger LOG = org.apache.log4j.Logger.getLogger(SubscriptionRetrieveBolt.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SubscriptionRetrieveBolt.class);
 
     /**
      *
@@ -140,7 +141,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
             }
         } catch (RestClientErrorCodeException e) {
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
@@ -150,7 +151,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
             return;
         } catch (Exception e) {
             // TODO Log the error
-            LOG.error(e);
+            LOG.error(this.getClass().getName(), e);
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;

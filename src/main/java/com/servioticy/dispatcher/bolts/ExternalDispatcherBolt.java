@@ -39,6 +39,7 @@ import com.servioticy.datamodel.sensorupdate.SensorUpdate;
 import com.servioticy.dispatcher.DispatcherContext;
 import com.servioticy.dispatcher.SUCache;
 import com.servioticy.dispatcher.publishers.Publisher;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
@@ -51,7 +52,10 @@ public class ExternalDispatcherBolt implements IRichBolt {
     private Publisher publisher;
     private SUCache suCache;
     private DispatcherContext dc;
-    private static Logger LOG = org.apache.log4j.Logger.getLogger(ExternalDispatcherBolt.class);
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ExternalDispatcherBolt.class);
+
+
     private ObjectMapper mapper;
 //    private PDP pdp;
 

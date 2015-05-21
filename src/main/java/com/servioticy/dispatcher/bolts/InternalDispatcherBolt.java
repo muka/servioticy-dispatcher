@@ -37,6 +37,7 @@ import de.passau.uni.sec.compose.pdp.servioticy.PermissionCacheObject;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
+import org.slf4j.LoggerFactory;
 
 public class InternalDispatcherBolt implements IRichBolt {
 
@@ -46,7 +47,9 @@ public class InternalDispatcherBolt implements IRichBolt {
     private Publisher publisher;
     private SUCache suCache;
     private DispatcherContext dc;
-    private static Logger LOG = Logger.getLogger(InternalDispatcherBolt.class);
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(InternalDispatcherBolt.class);
+
     private ObjectMapper mapper;
 //    private PDP pdp;
 
@@ -80,7 +83,7 @@ public class InternalDispatcherBolt implements IRichBolt {
         try {
             publisher.connect(dc.internalPubUser, dc.internalPubPassword);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(this.getClass().getName(), e);
         }
     }
 
