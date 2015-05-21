@@ -1,18 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import backtype.storm.task.OutputCollector;
@@ -42,12 +44,16 @@ import de.passau.uni.sec.compose.pdp.servioticy.exception.PDPServioticyException
 
 import java.util.Map;
 import java.util.Map.Entry;
+import org.apache.log4j.Logger;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
  *
  */
 public class StreamDispatcherBolt implements IRichBolt {
+
+    private static Logger LOG = org.apache.log4j.Logger.getLogger(StreamDispatcherBolt.class);
+
     /**
      *
      */
@@ -59,22 +65,22 @@ public class StreamDispatcherBolt implements IRichBolt {
     private ObjectMapper mapper;
 //    private PDP pdp;
 
-    public StreamDispatcherBolt(DispatcherContext dc){
+    public StreamDispatcherBolt(DispatcherContext dc) {
         this.dc = dc;
     }
 
     // For testing purposes
-    public StreamDispatcherBolt(DispatcherContext dc, RestClient restClient){
+    public StreamDispatcherBolt(DispatcherContext dc, RestClient restClient) {
         this.dc = dc;
         this.restClient = restClient;
     }
 
     public void prepare(Map stormConf, TopologyContext context,
-                        OutputCollector collector) {
+            OutputCollector collector) {
         this.mapper = new ObjectMapper();
         this.collector = collector;
         this.context = context;
-        if(restClient == null){
+        if (restClient == null) {
             restClient = new RestClient();
         }
 //        pdp = new LocalPDP();
@@ -98,21 +104,21 @@ public class StreamDispatcherBolt implements IRichBolt {
 
         String soDoc;
 
-        try{
+        try {
             frr = restClient.restRequest(
                     dc.restBaseURL
-                            + "private/security/" + destination, null, RestClient.GET,
+                    + "private/security/" + destination, null, RestClient.GET,
                     null);
             rr = frr.get();
             soDoc = rr.getResponse();
             so = this.mapper.readValue(soDoc,
                     SO.class);
 
-            if(input.getSourceStreamId().equals("stream")){
-                if(so.getGroups() != null){
-                    for(Entry<String, SOGroup> group: so.getGroups().entrySet()){
+            if (input.getSourceStreamId().equals("stream")) {
+                if (so.getGroups() != null) {
+                    for (Entry<String, SOGroup> group : so.getGroups().entrySet()) {
                         // If there is a group called like the stream, then the docname refers to the group.
-                        if(group.getKey().equals(docId)){
+                        if (group.getKey().equals(docId)) {
                             collector.ack(input);
                             return;
                         }
@@ -121,15 +127,16 @@ public class StreamDispatcherBolt implements IRichBolt {
             }
 
             SOProcessor sop = SOProcessor.factory(so, this.mapper);
-            if(sop.getClass() == SOProcessor010.class) {
-                soDoc = ((SOProcessor010)sop).replaceAliases();
-                ((SOProcessor010)sop).compileJSONPaths();
+            if (sop.getClass() == SOProcessor010.class) {
+                soDoc = ((SOProcessor010) sop).replaceAliases();
+                ((SOProcessor010) sop).compileJSONPaths();
             }
 
             SensorUpdate su = this.mapper.readValue(suDoc, SensorUpdate.class);
 
             boolean emitted = false;
             for (String streamIdByDoc : sop.getStreamsBySourceId(docId)) {
+
                 // If the SU comes from the same stream than it is going, it must be stopped
 //                boolean beenThere = false;
 //                for (ArrayList<String> prevStream : su.getTriggerPath()) {
@@ -166,19 +173,19 @@ public class StreamDispatcherBolt implements IRichBolt {
             if (!emitted) {
                 BenchmarkBolt.send(collector, input, dc, suDoc, "no-stream");
             }
-        } catch(RestClientErrorCodeException e){
+        } catch (RestClientErrorCodeException e) {
             // TODO Log the error
-            e.printStackTrace();
-            if(e.getRestResponse().getHttpCode()>= 500){
+            LOG.error(e);
+            if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
             }
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;
-        }catch (Exception e) {
+        } catch (Exception e) {
             // TODO Log the error
-            e.printStackTrace();
+            LOG.error(e);
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;
@@ -192,7 +199,9 @@ public class StreamDispatcherBolt implements IRichBolt {
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream("default", new Fields("soid", "streamid", "so", "originid", "su"));
-        if (dc.benchmark) declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        if (dc.benchmark) {
+            declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        }
     }
 
     public Map<String, Object> getComponentConfiguration() {

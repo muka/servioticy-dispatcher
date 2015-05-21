@@ -78,7 +78,6 @@ public class MQTTPublisher extends Publisher {
 
         int attempts = 0;
 
-
         if (asyncClient != null) {
 
             if (!asyncClient.isConnected()) {

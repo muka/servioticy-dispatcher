@@ -92,6 +92,7 @@ public class ExternalDispatcherBolt implements IRichBolt {
     }
 
     public void execute(Tuple input) {
+
         ExternalSubscription externalSub;
         SensorUpdate su;
         String sourceSOId;
@@ -143,13 +144,16 @@ public class ExternalDispatcherBolt implements IRichBolt {
 
             String destTopic = externalSub.getDestination() + "/" + sourceSOId + "/streams/" + streamId + "/updates";
             publisher.publishMessage(destTopic, mapper.writeValueAsString(su));
+
             this.collector.emit(Reputation.STREAM_SO_PUBSUB, input,
                     new Values(sourceSOId, // in-soid
                             streamId, // in-streamid
                             destTopic,
                             externalSub.getUserId())
             );
+
             LOG.info("Message pubished on topic " + destTopic);
+
         } catch (Exception e) {
             LOG.error("FAIL", e);
             collector.fail(input);
