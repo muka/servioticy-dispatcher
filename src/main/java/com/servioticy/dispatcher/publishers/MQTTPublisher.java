@@ -41,21 +41,21 @@ public class MQTTPublisher extends Publisher {
         String uris[] = new String[1];
         uris[0] = asyncClient.getServerURI();
 
-        LOG.info("MQTT uri " + uris[0]);
+        LOG.info("MQTT: uri " + uris[0]);
 
         options.setServerURIs(uris);
         options.setUserName(username);
         options.setPassword(password.toCharArray());
 
-        LOG.debug("MQTT connect options: " + options.toString());
+        LOG.debug("MQTT: connect options: " + options.toString());
 
         try {
             asyncClient.connect(options).waitForCompletion();
         } catch (MqttSecurityException e) {
-            LOG.error("FAIL in connect: ", e);
+            LOG.error("MQTT: FAIL in connect: ", e);
             throw e;
         } catch (MqttException e) {
-            LOG.error("FAIL in connect:", e);
+            LOG.error("MQTT: FAIL in connect:", e);
             throw e;
         }
     }
@@ -65,7 +65,7 @@ public class MQTTPublisher extends Publisher {
         try {
             asyncClient.disconnect().waitForCompletion();
         } catch (MqttException e) {
-            LOG.error("FAIL", e);
+            LOG.error("MQTT: FAIL", e);
         }
     }
 
@@ -75,32 +75,39 @@ public class MQTTPublisher extends Publisher {
     }
 
     public void publishMessage(String topic, String msg) {
+
         int attempts = 0;
+
+
         if (asyncClient != null) {
 
             if (!asyncClient.isConnected()) {
+                LOG.error("MQTT: publishMessage: client is not connected!");
                 return;
             }
 
             try {
 
                 if (msg == null) {
-                    LOG.error("FAIL in publishMessage: msg is null");
+                    LOG.error("MQTT: FAIL in publishMessage: msg is null");
                     return;
                 }
 
                 String fullTopic = topic;
 
-                LOG.info("Publish to MQTT topic " + fullTopic + ":" + msg);
+                LOG.info("MQTT: Publish to MQTT topic " + fullTopic + ":" + msg);
 
                 MqttMessage message = new MqttMessage(msg.getBytes());
                 message.setQos(0);
                 asyncClient.publish(fullTopic, message);//.waitForCompletion();
 
             } catch (Exception e) {
-                LOG.error("FAIL in publishMessage: ", e);
+                LOG.error("MQTT: FAIL in publishMessage: ", e);
             }
 
+        }
+        else {
+            LOG.error("MQTT: publishMessage: client is not initialized!");
         }
 
     }
