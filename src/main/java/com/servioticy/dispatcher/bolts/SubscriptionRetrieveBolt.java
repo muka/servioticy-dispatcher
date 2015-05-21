@@ -1,18 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ * ****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import backtype.storm.task.OutputCollector;
@@ -31,11 +33,15 @@ import com.servioticy.restclient.RestClientErrorCodeException;
 import com.servioticy.restclient.RestResponse;
 
 import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
  */
 public class SubscriptionRetrieveBolt implements IRichBolt {
+
+    private static Logger LOG = org.apache.log4j.Logger.getLogger(SubscriptionRetrieveBolt.class);
+
     /**
      *
      */
@@ -57,7 +63,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
     }
 
     public void prepare(Map stormConf, TopologyContext context,
-                        OutputCollector collector) {
+            OutputCollector collector) {
         this.collector = collector;
         this.context = context;
         this.mapper = new ObjectMapper();
@@ -78,9 +84,9 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
         try {
             frr = restClient.restRequest(
                     dc.restBaseURL
-                            + "private/" + soid + "/streams/"
-                            + streamid
-                            + "/subscriptions/", null, RestClient.GET,
+                    + "private/" + soid + "/streams/"
+                    + streamid
+                    + "/subscriptions/", null, RestClient.GET,
                     null
             );
 
@@ -134,7 +140,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
             }
         } catch (RestClientErrorCodeException e) {
             // TODO Log the error
-            e.printStackTrace();
+            LOG.error(e);
             if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
@@ -144,7 +150,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
             return;
         } catch (Exception e) {
             // TODO Log the error
-            e.printStackTrace();
+            LOG.error(e);
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;

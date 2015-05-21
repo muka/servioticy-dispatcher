@@ -13,7 +13,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *****************************************************************************
+ * ****************************************************************************
  */
 package com.servioticy.dispatcher.bolts;
 
@@ -125,12 +125,9 @@ public class InternalDispatcherBolt implements IRichBolt {
 //                collector.ack(input);
 //                return;
 //            }
-
             LOG.info("Publish to internal topic " + internalSub.getDestination());
 
             publisher.publishMessage(internalSub.getDestination(), suStr);
-
-
 
 //            this.collector.emit(Reputation.STREAM_SO_SERVICE, input,
 //                    new Values(sourceSOId, // in-soid
@@ -138,8 +135,6 @@ public class InternalDispatcherBolt implements IRichBolt {
 //                            internalSub.getDestination(),
 //                            internalSub.getUserId())
 //            );
-
-
         } catch (Exception e) {
             LOG.error("FAIL", e);
             collector.fail(input);

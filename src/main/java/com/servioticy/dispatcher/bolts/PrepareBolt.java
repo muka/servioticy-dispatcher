@@ -1,18 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ * ****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import backtype.storm.task.OutputCollector;
@@ -34,12 +36,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.log4j.Logger;
 
 /**
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
  *
  */
 public class PrepareBolt implements IRichBolt {
+
+    private static Logger LOG = org.apache.log4j.Logger.getLogger(PrepareBolt.class);
+
     /**
      *
      */
@@ -48,7 +54,6 @@ public class PrepareBolt implements IRichBolt {
     private RestClient restClient;
     private DispatcherContext dc;
     private ObjectMapper mapper;
-
 
     public PrepareBolt(DispatcherContext dc) {
         this.dc = dc;
@@ -61,7 +66,7 @@ public class PrepareBolt implements IRichBolt {
     }
 
     public void prepare(Map stormConf, TopologyContext context,
-                        OutputCollector collector) {
+            OutputCollector collector) {
         this.collector = collector;
         this.mapper = new ObjectMapper();
 
@@ -93,11 +98,10 @@ public class PrepareBolt implements IRichBolt {
 //                this.collector.fail(input);
 //                return;
 //            }
-
             su = this.mapper.readValue(suDoc, SensorUpdate.class);
 
             // Reputation
-            if (su.getComposed() == null || !su.getComposed()){
+            if (su.getComposed() == null || !su.getComposed()) {
                 this.collector.emit(Reputation.STREAM_WO_SO, input,
                         new Values(soid,
                                 streamid,
@@ -108,7 +112,7 @@ public class PrepareBolt implements IRichBolt {
             }
 
             // Benchmark
-            if(dc.benchmark) {
+            if (dc.benchmark) {
 
                 if (su.getTriggerPath() == null) {
                     su.setTriggerPath(new ArrayList<ArrayList<String>>());
@@ -119,17 +123,17 @@ public class PrepareBolt implements IRichBolt {
                     su.setOriginId(UUID.randomUUID().getMostSignificantBits());
                 }
                 /*else if( (System.currentTimeMillis() - su.getPathTimestamps().get(su.getPathTimestamps().size()-1)) > 2*60*1000 ||
-                         (System.currentTimeMillis() - su.getPathTimestamps().get(0)) > 10*60*1000){
-                    // Timeout
-                    this.collector.emit("benchmark", input,
-                            new Values(suDoc,
-                                    System.currentTimeMillis(),
-                                    "timeout")
-                    );
-                    collector.ack(input);
-                    //TODO Log the error
-                    return;
-                }*/
+                 (System.currentTimeMillis() - su.getPathTimestamps().get(0)) > 10*60*1000){
+                 // Timeout
+                 this.collector.emit("benchmark", input,
+                 new Values(suDoc,
+                 System.currentTimeMillis(),
+                 "timeout")
+                 );
+                 collector.ack(input);
+                 //TODO Log the error
+                 return;
+                 }*/
 
                 suDoc = this.mapper.writeValueAsString(su);
 //                try {
@@ -144,12 +148,11 @@ public class PrepareBolt implements IRichBolt {
         } catch (Exception e) {
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             // TODO Log the error
-            e.printStackTrace();
+            LOG.error(e);
             collector.ack(input);
             return;
         }
 
-        
         this.collector.emit(
                 "stream",
                 input,
@@ -175,7 +178,9 @@ public class PrepareBolt implements IRichBolt {
         declarer.declareStream("subscription", new Fields("soid", "streamid", "su"));
         declarer.declareStream("stream", new Fields("docid", "destination", "su"));
         declarer.declareStream(Reputation.STREAM_WO_SO, new Fields("out-soid", "out-streamid", "user_timestamp", "date", "fresh"));
-        if (dc.benchmark) declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        if (dc.benchmark) {
+            declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        }
 
     }
 

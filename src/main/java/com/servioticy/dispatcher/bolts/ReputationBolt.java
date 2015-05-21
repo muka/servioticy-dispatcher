@@ -1,18 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import backtype.storm.task.OutputCollector;
@@ -37,7 +39,8 @@ import java.util.UUID;
  * @author Álvaro Villalba Navarro <alvaro.villalba@bsc.es>
  *
  */
-public class ReputationBolt implements IRichBolt{
+public class ReputationBolt implements IRichBolt {
+
     private static final long serialVersionUID = 1L;
     private OutputCollector collector;
     private TopologyContext context;
@@ -58,7 +61,7 @@ public class ReputationBolt implements IRichBolt{
 
     @Override
     public void prepare(Map stormConf, TopologyContext context,
-                        OutputCollector collector) {
+            OutputCollector collector) {
         mapper = new ObjectMapper();
         this.collector = collector;
         this.context = context;
@@ -69,7 +72,7 @@ public class ReputationBolt implements IRichBolt{
         this.mapBoltStream.put("default", ReputationBolt.STREAM_SO_USER);
         this.mapBoltStream.put(Reputation.STREAM_WO_SO, ReputationBolt.STREAM_WO_SO);
         ArrayList<URI> nodes = new ArrayList<URI>();
-        for(String address: dc.storageAddresses){
+        for (String address : dc.storageAddresses) {
             nodes.add(URI.create(address));
         }
 
@@ -98,7 +101,7 @@ public class ReputationBolt implements IRichBolt{
 
         // src
         String stormStream = input.getSourceStreamId();
-        switch (this.mapBoltStream.get(stormStream)){
+        switch (this.mapBoltStream.get(stormStream)) {
             case ReputationBolt.STREAM_WO_SO:
                 webObjectAddress = new ReputationAddressWebObject();
                 webObjectAddress.setWebobject(true);
@@ -118,7 +121,7 @@ public class ReputationBolt implements IRichBolt{
         }
 
         // dest
-        switch (this.mapBoltStream.get(input.getSourceStreamId())){
+        switch (this.mapBoltStream.get(input.getSourceStreamId())) {
             case ReputationBolt.STREAM_WO_SO:
             case ReputationBolt.STREAM_SO_SO:
                 soOutAddress = new ReputationAddressSO();
@@ -145,7 +148,7 @@ public class ReputationBolt implements IRichBolt{
         }
 
         // others
-        switch (this.mapBoltStream.get(input.getSourceStreamId())){
+        switch (this.mapBoltStream.get(input.getSourceStreamId())) {
             case ReputationBolt.STREAM_SO_SO:
                 reputation.setEvent(input.getBooleanByField("event"));
                 reputation.setDiscard(input.getStringByField("discard"));
