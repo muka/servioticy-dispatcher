@@ -1,48 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <context>
-    <servioticyAPI>http://servioticy.local:8070/</servioticyAPI>
+    <servioticyAPI>http://127.0.0.1:8080/</servioticyAPI>
     <benchmark>false</benchmark>
     <benchResultsDir>~</benchResultsDir>
     <spouts>
         <updates>
             <name>services</name>
             <addresses>
-                <address>servioticy.local</address>
+                <address>127.0.0.1</address>
             </addresses>
             <port>2229</port>
         </updates>
         <actions>
             <name>actions</name>
             <addresses>
-                <address>servioticy.local</address>
+                <address>127.0.0.1</address>
             </addresses>
             <port>2229</port>
         </actions>
         <reputation>
             <name>reputation</name>
             <addresses>
-                <address>servioticy.local</address>
+                <address>127.0.0.1</address>
             </addresses>
             <port>2229</port>
         </reputation>
     </spouts>
-	<publishers>
-		<external>
-			<name>servioticy</name>
-			<address>tcp://servioticy.local</address>
-			<port>1883</port>
-			<username>compose</username>
-			<password>shines</password>
-			<class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
-		</external>
-		<internal>
-			<name>servioticy</name>
-			<address>tcp://servioticy.local</address>
-			<port>1883</port>
-			<username>compose</username>
-			<password>shines</password>
-			<class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
-		</internal>
+    <publishers>
+        <external>
+            <name>servioticy</name>
+            <address>tcp://servioticy.local</address>
+            <port>1883</port>
+            <username>compose</username>
+            <password>shines</password>
+            <class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
+        </external>
+        <internal>
+            <name>servioticy</name>
+            <address>tcp://servioticy.local</address>
+            <port>1883</port>
+            <username>compose</username>
+            <password>shines</password>
+            <class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
+        </internal>
         <actions>
             <name>servioticy</name>
             <address>tcp://servioticy.local</address>
@@ -51,7 +51,7 @@
             <password>shines</password>
             <class>com.servioticy.dispatcher.publishers.MQTTPublisher</class>
         </actions>
-	</publishers>
+    </publishers>
     <storage>
         <addresses>
             <address>http://servioticy.local:8091/pools</address>

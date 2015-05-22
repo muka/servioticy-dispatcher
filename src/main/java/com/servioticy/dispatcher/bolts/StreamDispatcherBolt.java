@@ -76,6 +76,7 @@ public class StreamDispatcherBolt implements IRichBolt {
         this.restClient = restClient;
     }
 
+    @Override
     public void prepare(Map stormConf, TopologyContext context,
             OutputCollector collector) {
         this.mapper = new ObjectMapper();
@@ -93,7 +94,9 @@ public class StreamDispatcherBolt implements IRichBolt {
 //        pdp.setIdmPassword("");
     }
 
+    @Override
     public void execute(Tuple input) {
+
         SOSubscription soSub = null;
         SO so;
         RestResponse rr;
@@ -106,6 +109,7 @@ public class StreamDispatcherBolt implements IRichBolt {
         String soDoc;
 
         try {
+            
             frr = restClient.restRequest(
                     dc.restBaseURL
                     + "private/security/" + destination, null, RestClient.GET,
@@ -171,22 +175,26 @@ public class StreamDispatcherBolt implements IRichBolt {
                                 suDoc));
                 emitted = true;
             }
+            
             if (!emitted) {
                 BenchmarkBolt.send(collector, input, dc, suDoc, "no-stream");
             }
         } catch (RestClientErrorCodeException e) {
-            // TODO Log the error
-            LOG.error(this.getClass().getName(), e);
+            
+            LOG.error("RestClient Error", e);
+            
             if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
             }
+            
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
+
             return;
         } catch (Exception e) {
-            // TODO Log the error
-            LOG.error(this.getClass().getName(), e);
+
+            LOG.error("Exception!", e);
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;
@@ -194,10 +202,12 @@ public class StreamDispatcherBolt implements IRichBolt {
         collector.ack(input);
     }
 
+    @Override
     public void cleanup() {
 
     }
 
+    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream("default", new Fields("soid", "streamid", "so", "originid", "su"));
         if (dc.benchmark) {
@@ -205,6 +215,7 @@ public class StreamDispatcherBolt implements IRichBolt {
         }
     }
 
+    @Override
     public Map<String, Object> getComponentConfiguration() {
         return null;
     }

@@ -1,18 +1,20 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ *****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import java.util.Map;
@@ -34,86 +36,92 @@ import org.slf4j.LoggerFactory;
 
 public class ActuationDispatcherBolt implements IRichBolt {
 
-	private static final long serialVersionUID = 1L;
-	private OutputCollector collector;
-	private TopologyContext context;
-	private Publisher publisher;
-	private DispatcherContext dc;
+    private static final long serialVersionUID = 1L;
+    private OutputCollector collector;
+    private TopologyContext context;
+    private Publisher publisher;
+    private DispatcherContext dc;
 
-        private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ActuationDispatcherBolt.class);
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ActuationDispatcherBolt.class);
 
-	private ObjectMapper mapper;
+    private ObjectMapper mapper;
 
-	public ActuationDispatcherBolt(DispatcherContext dc){
+    public ActuationDispatcherBolt(DispatcherContext dc) {
         this.dc = dc;
-	}
+    }
 
+    @Override
+    public void prepare(Map stormConf, TopologyContext context,
+            OutputCollector collector) {
+        this.mapper = new ObjectMapper();
+        this.collector = collector;
+        this.context = context;
+        this.publisher = null;
 
-	public void prepare(Map stormConf, TopologyContext context,
-			OutputCollector collector) {
-		this.mapper = new ObjectMapper();
-		this.collector = collector;
-		this.context = context;
-		this.publisher = null;
+        LOG.debug("MQTT server: " + dc.actionsPubAddress + ":" + dc.actionsPubPort);
+        LOG.debug("MQTT user/pass: " + dc.actionsPubUser + " / " + dc.actionsPubPassword);
 
-		LOG.debug("MQTT server: " + dc.actionsPubAddress + ":" + dc.actionsPubPort);
-		LOG.debug("MQTT user/pass: " + dc.actionsPubUser + " / "+dc.actionsPubPassword);
+        try {
+            publisher = Publisher.factory(dc.actionsPubClassName,
+                    dc.actionsPubAddress,
+                    dc.actionsPubPort,
+                    String.valueOf(context.getThisTaskId()));
+            publisher.connect(dc.actionsPubUser,
+                    dc.actionsPubPassword);
+        } catch (Exception e) {
+            LOG.error("Prepare: ", e);
+        }
 
-		try {
-			publisher = Publisher.factory(dc.actionsPubClassName,
-					dc.actionsPubAddress,
-					dc.actionsPubPort,
-					String.valueOf(context.getThisTaskId()));
-			publisher.connect(dc.actionsPubUser,
-					dc.actionsPubPassword);
-		} catch (Exception e) {
-			LOG.error("Prepare: ", e);
-		}
+    }
 
-	}
+    @Override
+    public void execute(Tuple input) {
 
-	public void execute(Tuple input) {
+        try {
+            String sourceSOId;
+            String actionId;
+            String actionName;
 
-		try {
-			String sourceSOId;
-			String actionId;
-			String actionName;
+            JsonNode actuation = this.mapper.readTree(input.getStringByField("action"));
+            sourceSOId = input.getStringByField("soid");
+            actionId = input.getStringByField("id");
+            actionName = input.getStringByField("name");
 
-			JsonNode actuation = this.mapper.readTree(input.getStringByField("action"));
-			sourceSOId = input.getStringByField("soid");
-			actionId = input.getStringByField("id");
-			actionName = input.getStringByField("name");
-			Log.info("received actuation\n\t\t" +
-					 "action: "+actuation.toString()+"\n\t\t"+
-					 "soid: "+sourceSOId+"\n\t\t"+
-					 "name: "+actionName+"\n\t\t"+
-					 "id: "+actionId);
+            Log.info("received actuation\n\t\t"
+                    + "action: " + actuation.toString() + "\n\t\t"
+                    + "soid: " + sourceSOId + "\n\t\t"
+                    + "name: " + actionName + "\n\t\t"
+                    + "id: " + actionId);
 
+            if (!publisher.isConnected()) {
+                publisher.connect(dc.actionsPubUser,
+                        dc.actionsPubPassword);
+            }
+            
+            publisher.publishMessage(sourceSOId + "/actions", actuation.toString());
+            
+            LOG.info("Actuation request pubished on topic " + sourceSOId + "/actions");
+            LOG.info("Actuation message contents: " + actuation.toString());
 
-			if(!publisher.isConnected()){
-				publisher.connect(dc.actionsPubUser,
-						dc.actionsPubPassword);
-			}
-			publisher.publishMessage(sourceSOId+"/actions", actuation.toString());
-			LOG.info("Actuation request pubished on topic "+sourceSOId+"/actions");
-			LOG.info("Actuation message contents: "+actuation.toString());
+        } catch (Exception e) {
+            LOG.error(this.getClass().getName(), e);
+            collector.fail(input);
+            return;
+        }
+        collector.ack(input);
+    }
 
-		} catch (Exception e) {
-			LOG.error(this.getClass().getName(), e);
-			collector.fail(input);
-			return;
-		}
-		collector.ack(input);
-	}
+    @Override
+    public void cleanup() {
+    }
 
-	public void cleanup() {
-	}
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    }
 
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-	}
-
-	public Map<String, Object> getComponentConfiguration() {
-		return null;
-	}
+    @Override
+    public Map<String, Object> getComponentConfiguration() {
+        return null;
+    }
 
 }

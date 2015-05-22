@@ -60,6 +60,10 @@ public class DispatcherTopology {
         options.addOption(OptionBuilder
                 .withDescription("Enable debugging")
                 .create("d"));
+        
+        options.addOption(OptionBuilder
+                .withDescription("Enable Reputation")
+                .create("r"));
 
         CommandLineParser parser = new GnuParser();
         CommandLine cmd = parser.parse(options, args);
@@ -77,12 +81,16 @@ public class DispatcherTopology {
         // TODO Auto-assign workers to the spout in function of the number of Kestrel IPs
         builder.setSpout("updates", new KestrelThriftSpout(Arrays.asList(dc.updatesAddresses), dc.updatesPort, dc.updatesQueue, new UpdateDescriptorScheme()));
         builder.setSpout("actions", new KestrelThriftSpout(Arrays.asList(dc.actionsAddresses), dc.actionsPort, dc.actionsQueue, new ActuationScheme()));
-//        builder.setSpout("readreputation", new KestrelThriftSpout(Arrays.asList(dc.reputationAddresses), dc.reputationPort, dc.reputationQueue, new ReputationScheme()));
-
+        
+        if (cmd.hasOption("r")) {
+            builder.setSpout("readreputation", new KestrelThriftSpout(Arrays.asList(dc.reputationAddresses), dc.reputationPort, dc.reputationQueue, new ReputationScheme()));
+        }
+        
         builder.setBolt("prepare", new PrepareBolt(dc))
                 .shuffleGrouping("updates");
 
-        builder.setBolt("actuationdispatcher", new ActuationDispatcherBolt(dc)).shuffleGrouping("actions");
+        builder.setBolt("actuationdispatcher", new ActuationDispatcherBolt(dc))
+                .shuffleGrouping("actions");
 
         builder.setBolt("subretriever", new SubscriptionRetrieveBolt(dc))
                 .shuffleGrouping("prepare", "subscription");
@@ -100,12 +108,17 @@ public class DispatcherTopology {
         builder.setBolt("streamprocessor", new StreamProcessorBolt(dc))
                 .shuffleGrouping("streamdispatcher", "default");
 
-//        builder.setBolt("reputation", new ReputationBolt(dc), 2)
-//                .shuffleGrouping("prepare", Reputation.STREAM_WO_SO)
-//                .shuffleGrouping("streamprocessor", Reputation.STREAM_SO_SO)
-//                .shuffleGrouping("externaldispatcher", Reputation.STREAM_SO_PUBSUB)
-//                .shuffleGrouping("internaldispatcher", Reputation.STREAM_SO_SERVICE)
-//                .shuffleGrouping("readreputation");
+        if (cmd.hasOption("r")) {        
+        
+            builder.setBolt("reputation", new ReputationBolt(dc), 2)
+                    .shuffleGrouping("prepare", Reputation.STREAM_WO_SO)
+                    .shuffleGrouping("streamprocessor", Reputation.STREAM_SO_SO)
+                    .shuffleGrouping("externaldispatcher", Reputation.STREAM_SO_PUBSUB)
+                    .shuffleGrouping("internaldispatcher", Reputation.STREAM_SO_SERVICE)
+                    .shuffleGrouping("readreputation");
+
+        }
+
         if (dc.benchmark) {
             builder.setBolt("benchmark", new BenchmarkBolt(dc))
                     .shuffleGrouping("streamdispatcher", "benchmark")

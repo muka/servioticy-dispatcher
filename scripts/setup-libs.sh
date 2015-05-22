@@ -1,6 +1,6 @@
 #!/bin/bash
 
-storm_file="apache-storm-0.9.4"
+storm_file="apache-storm-0.9.3"
 storm_url="http://mirrors.muzzy.it/apache/storm/$storm_file/$storm_file.tar.gz"
 
 kestrel_file="kestrel-2.4.1"

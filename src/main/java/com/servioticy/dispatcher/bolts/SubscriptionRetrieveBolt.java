@@ -63,17 +63,22 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
         this.dc = dc;
     }
 
-    public void prepare(Map stormConf, TopologyContext context,
-            OutputCollector collector) {
+    @Override
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+        
         this.collector = collector;
         this.context = context;
         this.mapper = new ObjectMapper();
+        
         if (restClient == null) {
             restClient = new RestClient();
         }
+
     }
 
+    @Override
     public void execute(Tuple input) {
+
         Subscriptions subscriptions;
         RestResponse subscriptionsRR;
         FutureRestResponse frr;
@@ -83,6 +88,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
         String suDoc = input.getStringByField("su");
 
         try {
+
             frr = restClient.restRequest(
                     dc.restBaseURL
                     + "private/" + soid + "/streams/"
@@ -107,21 +113,30 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
 
             // No subscriptions
             if (subscriptions.getSubscriptions() == null || subscriptions.getSubscriptions().isEmpty()) {
+                
                 BenchmarkBolt.send(collector, input, dc, suDoc, "no-subscription");
                 collector.ack(input);
+                
                 return;
             }
 
-            for (Subscription subscription : subscriptions
-                    .getSubscriptions()) {
+            for (Subscription subscription : subscriptions.getSubscriptions()) {
+                
                 if (subscription.getClass().equals(SOSubscription.class)) {
+                    
                     SOSubscription soSub = (SOSubscription) subscription;
+                    
                     this.collector.emit("streamSub", input,
                             new Values(soSub.getGroupId(),
                                     soSub.getDestination(),
                                     suDoc)
                     );
-                } else if (subscription.getClass().equals(ExternalSubscription.class)) {
+                    
+                    continue;
+                } 
+                
+                if (subscription.getClass().equals(ExternalSubscription.class)) {
+                    
                     this.collector.emit("externalSub", input,
                             new Values(subscription.getId(),
                                     soid,
@@ -129,7 +144,13 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
                                     suDoc,
                                     streamid)
                     );
-                } else if (subscription.getClass().equals(InternalSubscription.class)) {
+                    
+                    continue;
+                    
+                } 
+                
+                if (subscription.getClass().equals(InternalSubscription.class)) {
+                    
                     this.collector.emit("internalSub", input,
                             new Values(subscription.getId(),
                                     soid,
@@ -137,32 +158,43 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
                                     suDoc,
                                     streamid)
                     );
+
                 }
             }
         } catch (RestClientErrorCodeException e) {
+            
             // TODO Log the error
             LOG.error(this.getClass().getName(), e);
+            
             if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
             }
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
+            
             collector.ack(input);
+            
             return;
+            
         } catch (Exception e) {
+            
             // TODO Log the error
             LOG.error(this.getClass().getName(), e);
+            
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;
         }
+        
         collector.ack(input);
-        return;
+
     }
 
+    @Override
     public void cleanup() {
     }
 
+    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream("streamSub", new Fields("docid", "destination", "su"));
         declarer.declareStream("externalSub", new Fields("subid", "soid", "subsdoc", "su", "streamid"));
@@ -170,6 +202,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
         declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
     }
 
+    @Override
     public Map<String, Object> getComponentConfiguration() {
         return null;
     }

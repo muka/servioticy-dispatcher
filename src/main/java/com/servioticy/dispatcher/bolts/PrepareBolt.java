@@ -66,6 +66,7 @@ public class PrepareBolt implements IRichBolt {
         this.restClient = restClient;
     }
 
+    @Override
     public void prepare(Map stormConf, TopologyContext context,
             OutputCollector collector) {
         this.collector = collector;
@@ -77,6 +78,7 @@ public class PrepareBolt implements IRichBolt {
 
     }
 
+    @Override
     public void execute(Tuple input) {
 //        RestResponse rr;
 //        FutureRestResponse frr;
@@ -169,12 +171,15 @@ public class PrepareBolt implements IRichBolt {
                         streamid,
                         suDoc)
         );
+
         this.collector.ack(input);
     }
 
+    @Override
     public void cleanup() {
     }
 
+    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream("subscription", new Fields("soid", "streamid", "su"));
         declarer.declareStream("stream", new Fields("docid", "destination", "su"));
@@ -185,6 +190,7 @@ public class PrepareBolt implements IRichBolt {
 
     }
 
+    @Override
     public Map<String, Object> getComponentConfiguration() {
         return null;
     }

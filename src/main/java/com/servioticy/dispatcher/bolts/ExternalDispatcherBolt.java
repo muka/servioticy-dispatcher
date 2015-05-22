@@ -13,7 +13,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *****************************************************************************
+ * ****************************************************************************
  */
 package com.servioticy.dispatcher.bolts;
 
@@ -55,7 +55,6 @@ public class ExternalDispatcherBolt implements IRichBolt {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ExternalDispatcherBolt.class);
 
-
     private ObjectMapper mapper;
 //    private PDP pdp;
 
@@ -63,6 +62,7 @@ public class ExternalDispatcherBolt implements IRichBolt {
         this.dc = dc;
     }
 
+    @Override
     public void prepare(Map stormConf, TopologyContext context,
             OutputCollector collector) {
 
@@ -91,10 +91,11 @@ public class ExternalDispatcherBolt implements IRichBolt {
         try {
             publisher.connect(dc.externalPubUser, dc.externalPubPassword);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error("FAIL", e);
         }
     }
 
+    @Override
     public void execute(Tuple input) {
 
         ExternalSubscription externalSub;
@@ -125,11 +126,11 @@ public class ExternalDispatcherBolt implements IRichBolt {
             collector.fail(input);
             return;
         }
+        
         try {
 
             if (!publisher.isConnected()) {
-                publisher.connect(dc.externalPubUser,
-                        dc.externalPubPassword);
+                publisher.connect(dc.externalPubUser, dc.externalPubPassword);
             }
 
 //            pco.setUserId(externalSub.getUserId());
@@ -143,8 +144,6 @@ public class ExternalDispatcherBolt implements IRichBolt {
 //                collector.ack(input);
 //                return;
 //            }
-
-
 
             String destTopic = externalSub.getDestination() + "/" + sourceSOId + "/streams/" + streamId + "/updates";
             publisher.publishMessage(destTopic, mapper.writeValueAsString(su));
@@ -167,14 +166,17 @@ public class ExternalDispatcherBolt implements IRichBolt {
         collector.ack(input);
     }
 
+    @Override
     public void cleanup() {
     }
 
+    @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declareStream(Reputation.STREAM_SO_PUBSUB, new Fields("in-soid", "in-streamid", "out-topic", "out-user_id"));
 
     }
 
+    @Override
     public Map<String, Object> getComponentConfiguration() {
         return null;
     }
