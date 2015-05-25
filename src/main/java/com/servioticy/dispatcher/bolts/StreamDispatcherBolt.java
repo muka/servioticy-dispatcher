@@ -107,17 +107,15 @@ public class StreamDispatcherBolt implements IRichBolt {
         String destination = input.getStringByField("destination");
 
         String soDoc;
-
+        
+        String uri = dc.restBaseURL + "private/security/" + destination;
+        
         try {
             
-            frr = restClient.restRequest(
-                    dc.restBaseURL
-                    + "private/security/" + destination, null, RestClient.GET,
-                    null);
+            frr = restClient.restRequest(uri, null, RestClient.GET, null);
             rr = frr.get();
             soDoc = rr.getResponse();
-            so = this.mapper.readValue(soDoc,
-                    SO.class);
+            so = this.mapper.readValue(soDoc, SO.class);
 
             if (input.getSourceStreamId().equals("stream")) {
                 if (so.getGroups() != null) {
@@ -181,6 +179,7 @@ public class StreamDispatcherBolt implements IRichBolt {
             }
         } catch (RestClientErrorCodeException e) {
             
+            LOG.warn("Error requesting " + uri);
             LOG.error("RestClient Error", e);
             
             if (e.getRestResponse().getHttpCode() >= 500) {
@@ -193,8 +192,10 @@ public class StreamDispatcherBolt implements IRichBolt {
 
             return;
         } catch (Exception e) {
-
+            
+            LOG.warn("Error requesting " + uri);
             LOG.error("Exception!", e);
+            
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;

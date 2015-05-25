@@ -51,8 +51,7 @@ public class ActuationDispatcherBolt implements IRichBolt {
     }
 
     @Override
-    public void prepare(Map stormConf, TopologyContext context,
-            OutputCollector collector) {
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         this.mapper = new ObjectMapper();
         this.collector = collector;
         this.context = context;
@@ -94,8 +93,7 @@ public class ActuationDispatcherBolt implements IRichBolt {
                     + "id: " + actionId);
 
             if (!publisher.isConnected()) {
-                publisher.connect(dc.actionsPubUser,
-                        dc.actionsPubPassword);
+                publisher.connect(dc.actionsPubUser, dc.actionsPubPassword);
             }
             
             publisher.publishMessage(sourceSOId + "/actions", actuation.toString());

@@ -149,8 +149,9 @@ public class PrepareBolt implements IRichBolt {
 //                }
             }
         } catch (Exception e) {
+            
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
-            // TODO Log the error
+            
             LOG.error(this.getClass().getName(), e);
             collector.ack(input);
             return;

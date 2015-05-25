@@ -86,33 +86,32 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
         String soid = input.getStringByField("soid");
         String streamid = input.getStringByField("streamid");
         String suDoc = input.getStringByField("su");
-
+        
+        String uri = dc.restBaseURL + "private/" + soid + "/streams/" + streamid + "/subscriptions/";
+        
         try {
-
-            frr = restClient.restRequest(
-                    dc.restBaseURL
-                    + "private/" + soid + "/streams/"
-                    + streamid
-                    + "/subscriptions/", null, RestClient.GET,
-                    null
-            );
+            
+            LOG.info("Loading subscriptions " + uri);
+            frr = restClient.restRequest(uri, null, RestClient.GET, null);
 
             subscriptionsRR = frr.get();
 
             // In case there are no subscriptions.
             int hCode = subscriptionsRR.getHttpCode();
             if (hCode == 204) {
+                LOG.info("No subscription available");
                 BenchmarkBolt.send(collector, input, dc, suDoc, "no-subscription");
                 this.collector.ack(input);
                 return;
             }
 
             String substr = subscriptionsRR.getResponse();
-            subscriptions = this.mapper.readValue(substr,
-                    Subscriptions.class);
+            subscriptions = this.mapper.readValue(substr, Subscriptions.class);
 
             // No subscriptions
             if (subscriptions.getSubscriptions() == null || subscriptions.getSubscriptions().isEmpty()) {
+                
+                LOG.info("Subscription list is empty");
                 
                 BenchmarkBolt.send(collector, input, dc, suDoc, "no-subscription");
                 collector.ack(input);
@@ -123,6 +122,8 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
             for (Subscription subscription : subscriptions.getSubscriptions()) {
                 
                 if (subscription.getClass().equals(SOSubscription.class)) {
+                    
+                    LOG.info("Found a SOSubscription");
                     
                     SOSubscription soSub = (SOSubscription) subscription;
                     
@@ -136,6 +137,8 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
                 } 
                 
                 if (subscription.getClass().equals(ExternalSubscription.class)) {
+                    
+                    LOG.info("Found an ExternalSubscription");
                     
                     this.collector.emit("externalSub", input,
                             new Values(subscription.getId(),
@@ -151,6 +154,8 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
                 
                 if (subscription.getClass().equals(InternalSubscription.class)) {
                     
+                    LOG.info("Found an InternalSubscription");
+                    
                     this.collector.emit("internalSub", input,
                             new Values(subscription.getId(),
                                     soid,
@@ -164,6 +169,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
         } catch (RestClientErrorCodeException e) {
             
             // TODO Log the error
+            LOG.warn("Error requesting subscsriptions list");
             LOG.error(this.getClass().getName(), e);
             
             if (e.getRestResponse().getHttpCode() >= 500) {
@@ -178,7 +184,7 @@ public class SubscriptionRetrieveBolt implements IRichBolt {
             
         } catch (Exception e) {
             
-            // TODO Log the error
+            LOG.warn("Error processing subscriptions");
             LOG.error(this.getClass().getName(), e);
             
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
