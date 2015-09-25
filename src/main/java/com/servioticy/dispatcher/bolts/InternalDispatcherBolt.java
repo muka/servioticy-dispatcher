@@ -23,7 +23,6 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.servioticy.datamodel.reputation.Reputation;
 import com.servioticy.datamodel.sensorupdate.SensorUpdate;
@@ -31,9 +30,6 @@ import com.servioticy.datamodel.subscription.InternalSubscription;
 import com.servioticy.dispatcher.DispatcherContext;
 import com.servioticy.dispatcher.SUCache;
 import com.servioticy.dispatcher.publishers.Publisher;
-import de.passau.uni.sec.compose.pdp.servioticy.LocalPDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PermissionCacheObject;
 import org.apache.log4j.Logger;
 
 import java.util.Map;

@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ *****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import backtype.storm.task.OutputCollector;
@@ -38,11 +40,6 @@ import com.servioticy.dispatcher.SUCache;
 import com.servioticy.queueclient.KestrelThriftClient;
 import com.servioticy.queueclient.QueueClient;
 import com.servioticy.queueclient.QueueClientException;
-import de.passau.uni.sec.compose.pdp.servioticy.LocalPDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PermissionCacheObject;
-import de.passau.uni.sec.compose.pdp.servioticy.exception.PDPServioticyException;
-import de.passau.uni.sec.compose.pdp.servioticy.provenance.ServioticyProvenance;
 import com.servioticy.restclient.*;
 
 import javax.script.ScriptException;
@@ -56,27 +53,27 @@ import java.util.concurrent.ExecutionException;
  */
 public class StreamProcessorBolt implements IRichBolt {
 
-	private static final long serialVersionUID = 1L;
-	private OutputCollector collector;
-	private TopologyContext context;
-	private SUCache suCache;
-	private QueueClient qc;
-	private RestClient restClient;
+    private static final long serialVersionUID = 1L;
+    private OutputCollector collector;
+    private TopologyContext context;
+    private SUCache suCache;
+    private QueueClient qc;
+    private RestClient restClient;
     private DispatcherContext dc;
     private ObjectMapper mapper;
-    private PDP pdp;
 
-    public StreamProcessorBolt(){
+    public StreamProcessorBolt() {
 
-	}
+    }
 
-	// For testing purposes
-	public StreamProcessorBolt(DispatcherContext dc, QueueClient qc, RestClient restClient){
+    // For testing purposes
+    public StreamProcessorBolt(DispatcherContext dc, QueueClient qc, RestClient restClient) {
         this.dc = dc;
-		this.qc = qc;
-		this.restClient = restClient;
-	}
-    public StreamProcessorBolt(DispatcherContext dc, RestClient restClient){
+        this.qc = qc;
+        this.restClient = restClient;
+    }
+
+    public StreamProcessorBolt(DispatcherContext dc, RestClient restClient) {
         this.restClient = restClient;
         this.dc = dc;
         String kestrelAddresses = "";
@@ -90,46 +87,43 @@ public class StreamProcessorBolt implements IRichBolt {
         ktc.setExpire(0);
         this.qc = ktc;
     }
-    public StreamProcessorBolt(DispatcherContext dc, QueueClient qc){
+
+    public StreamProcessorBolt(DispatcherContext dc, QueueClient qc) {
         this.dc = dc;
         this.qc = qc;
     }
-    public StreamProcessorBolt(DispatcherContext dc){
+
+    public StreamProcessorBolt(DispatcherContext dc) {
         this(dc, (RestClient) null);
     }
 
-	public void prepare(Map stormConf, TopologyContext context,
-			OutputCollector collector) {
-		this.collector = collector;
-		this.context = context;
-		this.suCache = new SUCache(25);
+    public void prepare(Map stormConf, TopologyContext context,
+            OutputCollector collector) {
+        this.collector = collector;
+        this.context = context;
+        this.suCache = new SUCache(25);
         this.mapper = new ObjectMapper();
-        this.pdp = new LocalPDP();
-        // Placeholders
-        this.pdp.setIdmHost("");
-        this.pdp.setIdmPort(0);
-        this.pdp.setIdmUser("");
-        this.pdp.setIdmPassword("");
+
         try {
             if (this.qc == null) {
                 qc = QueueClient.factory();
 
             }
             qc.connect();
-        } catch(Exception e){
+        } catch (Exception e) {
             // TODO log error
             e.printStackTrace();
         }
-		if(restClient == null){
-			restClient = new RestClient();
-		}
+        if (restClient == null) {
+            restClient = new RestClient();
+        }
 
-	}
+    }
 
-    private Map<String, SensorUpdate> getGroupSUs(Map<String, FutureRestResponse> rrs, SO so, String streamId) throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException, InterruptedException, PDPServioticyException {
-		Map<String, SensorUpdate> groupDocs = new HashMap<String, SensorUpdate>();
+    private Map<String, SensorUpdate> getGroupSUs(Map<String, FutureRestResponse> rrs, SO so, String streamId) throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException, InterruptedException {
+        Map<String, SensorUpdate> groupDocs = new HashMap<String, SensorUpdate>();
 
-        for(Map.Entry<String, FutureRestResponse> frrEntry: rrs.entrySet()){
+        for (Map.Entry<String, FutureRestResponse> frrEntry : rrs.entrySet()) {
             FutureRestResponse frr = frrEntry.getValue();
             String docId = frrEntry.getKey();
             RestResponse rr;
@@ -145,20 +139,9 @@ public class StreamProcessorBolt implements IRichBolt {
                 continue;
             }
             // In case there is no update.
-            if(rr.getHttpCode() == 204){
+            if (rr.getHttpCode() == 204) {
                 groupDocs.put(docId, null);
                 continue;
-            }
-
-            PermissionCacheObject pco = new PermissionCacheObject();
-            pco.setStream(streamId);
-            SensorUpdate lastSU = this.mapper.readValue(rr.getResponse(), SensorUpdate.class);
-            pco = this.pdp.checkAuthorization(null, this.mapper.readTree(this.mapper.writeValueAsString(so.getSecurity())), mapper.readTree(mapper.writeValueAsString(lastSU.getSecurity())), pco,
-                    PDP.operationID.DispatchData);
-            if(!pco.isPermission()){
-                return null;
-            }else {
-                groupDocs.put(docId, lastSU);
             }
 
         }
@@ -166,13 +149,13 @@ public class StreamProcessorBolt implements IRichBolt {
         return groupDocs;
     }
 
-    private Map<String, FutureRestResponse> getGroupSUAsyncResponses(Set<String>  groupIds, SO so) throws RestClientException, RestClientErrorCodeException, JsonProcessingException {
+    private Map<String, FutureRestResponse> getGroupSUAsyncResponses(Set<String> groupIds, SO so) throws RestClientException, RestClientErrorCodeException, JsonProcessingException {
         Map<String, FutureRestResponse> rrs = new HashMap();
-        if(so.getGroups() == null){
+        if (so.getGroups() == null) {
             return rrs;
         }
-        for(String groupId: groupIds){
-            if(!so.getGroups().containsKey(groupId)){
+        for (String groupId : groupIds) {
+            if (!so.getGroups().containsKey(groupId)) {
                 continue;
             }
 
@@ -200,20 +183,20 @@ public class StreamProcessorBolt implements IRichBolt {
     private Map<String, SensorUpdate> getStreamSUs(Map<String, FutureRestResponse> frrs) throws IOException, RestClientException, RestClientErrorCodeException, ExecutionException, InterruptedException {
         Map<String, SensorUpdate> streamDocs = new HashMap<String, SensorUpdate>();
 
-        for(Map.Entry<String, FutureRestResponse> frrEntry: frrs.entrySet()) {
+        for (Map.Entry<String, FutureRestResponse> frrEntry : frrs.entrySet()) {
             FutureRestResponse frr = frrEntry.getValue();
             String docId = frrEntry.getKey();
             RestResponse rr;
             streamDocs.put(docId, getStreamSU(frr));
         }
-		return streamDocs;
-	}
+        return streamDocs;
+    }
 
     private Map<String, FutureRestResponse> getStreamSUAsyncResponses(Set<String> streamIds, SO so) throws RestClientException, RestClientErrorCodeException {
         Map<String, FutureRestResponse> rrs = new HashMap();
         Map<String, SensorUpdate> streamDocs = new HashMap<String, SensorUpdate>();
-        for(String streamId: streamIds){
-            if(!so.getStreams(this.mapper).containsKey(streamId)){
+        for (String streamId : streamIds) {
+            if (!so.getStreams(this.mapper).containsKey(streamId)) {
                 continue;
             }
 
@@ -235,7 +218,7 @@ public class StreamProcessorBolt implements IRichBolt {
             return null;
         }
         // In case there is no update.
-        if(rr.getHttpCode() == 204){
+        if (rr.getHttpCode() == 204) {
             return null;
         }
         return this.mapper.readValue(rr.getResponse(), SensorUpdate.class);
@@ -245,7 +228,7 @@ public class StreamProcessorBolt implements IRichBolt {
         FutureRestResponse frr;
         frr = restClient.restRequest(
                 dc.restBaseURL
-                        + "private/" + so.getId() + "/streams/" + streamId + "/lastUpdate",
+                + "private/" + so.getId() + "/streams/" + streamId + "/lastUpdate",
                 null, RestClient.GET,
                 null
         );
@@ -253,36 +236,37 @@ public class StreamProcessorBolt implements IRichBolt {
         return frr;
     }
 
-    public void sendAllToReputation(Tuple input, Map<String, SensorUpdate> sensorUpdates, String originId, SO so, String streamId, String reason) throws IOException, PDPServioticyException {
-        for (Map.Entry<String, SensorUpdate> entry: sensorUpdates.entrySet()) {
-            boolean event = entry.getKey() == originId;
+    public void sendAllToReputation(Tuple input, Map<String, SensorUpdate> sensorUpdates, String originId, SO so, String streamId, String reason) throws IOException {
+        for (Map.Entry<String, SensorUpdate> entry : sensorUpdates.entrySet()) {
+            boolean event = entry.getKey().equals(originId);
             SensorUpdate entrySU = entry.getValue();
-            if(entrySU == null){
+            if (entrySU == null) {
                 continue;
             }
             sendToReputation(input, entrySU, so, streamId, reason, event);
         }
     }
 
-    public void sendToReputation(Tuple input, SensorUpdate su, SO so, String streamId, String reason, Boolean event) throws IOException, PDPServioticyException {
-        ServioticyProvenance prov = new ServioticyProvenance();
-        ReputationAddressSO src = this.mapper.readValue(
-                prov.getSourceFromSecurityMetaDataAsString(
-                        this.mapper.writeValueAsString(
-                                su.getSecurity()
-                        )
-                ), ReputationAddressSO.class);
-        this.collector.emit(Reputation.STREAM_SO_SO, input,
-                new Values(src.getSoid(), // in-soid
-                        src.getStreamid(), // in-streamid
-                        so.getId(),
-                        streamId,
-                        su.getLastUpdate(),
-                        System.currentTimeMillis(),
-                        event,
-                        reason)
-        );
+    public void sendToReputation(Tuple input, SensorUpdate su, SO so, String streamId, String reason, Boolean event) throws IOException {
+//        ServioticyProvenance prov = new ServioticyProvenance();
+//        ReputationAddressSO src = this.mapper.readValue(
+//                prov.getSourceFromSecurityMetaDataAsString(
+//                        this.mapper.writeValueAsString(
+//                                su.getSecurity()
+//                        )
+//                ), ReputationAddressSO.class);
+//        this.collector.emit(Reputation.STREAM_SO_SO, input,
+//                new Values(src.getSoid(), // in-soid
+//                        src.getStreamid(), // in-streamid
+//                        so.getId(),
+//                        streamId,
+//                        su.getLastUpdate(),
+//                        System.currentTimeMillis(),
+//                        event,
+//                        reason)
+//        );
     }
+
     public void execute(Tuple input) {
         SensorUpdate su;
         FutureRestResponse previousSURR;
@@ -325,13 +309,12 @@ public class StreamProcessorBolt implements IRichBolt {
                 collector.ack(input);
                 return;
             }*/
-            if(sop.getClass() == SOProcessor010.class) {
+            if (sop.getClass() == SOProcessor010.class) {
                 // It is not needed to replace the alias, it has been already done in the previous bolt.
-                ((SOProcessor010)sop).compileJSONPaths();
+                ((SOProcessor010) sop).compileJSONPaths();
             }
 
             // Get the last update from the current stream
-
             previousSU = this.getStreamSU(previousSURR);
 
             // There is already a newer generated update than the one received
@@ -350,7 +333,7 @@ public class StreamProcessorBolt implements IRichBolt {
                 sensorUpdates.putAll(this.getStreamSUs(streamSURRs));
                 sensorUpdates.put(streamId, previousSU);
                 Map<String, SensorUpdate> groupLastSus = this.getGroupSUs(groupSURRs, so, streamId);
-                if(groupLastSus == null){
+                if (groupLastSus == null) {
                     collector.ack(input);
                     return;
                 }
@@ -395,7 +378,7 @@ public class StreamProcessorBolt implements IRichBolt {
                 sendAllToReputation(input, sensorUpdates, originId, so, streamId, Reputation.DISCARD_ERROR);
                 return;
             }
-            if(dc.benchmark) {
+            if (dc.benchmark) {
                 String[] fromStr = {so.getId(), streamId};
                 resultSU.setTriggerPath(su.getTriggerPath());
                 resultSU.setPathTimestamps(su.getPathTimestamps());
@@ -405,9 +388,7 @@ public class StreamProcessorBolt implements IRichBolt {
                 resultSU.getPathTimestamps().add(System.currentTimeMillis());
             }
 
-
             resultSUDoc = this.mapper.writeValueAsString(resultSU);
-
 
             // generate opid
             String opid = Integer.toHexString(resultSUDoc.hashCode());
@@ -420,13 +401,13 @@ public class StreamProcessorBolt implements IRichBolt {
             ud.setSu(resultSU);
             String upDescriptorDoc = this.mapper.writeValueAsString(ud);
 
-		    // Put to the queue
-            try{
-                if(!qc.isConnected()) {
+            // Put to the queue
+            try {
+                if (!qc.isConnected()) {
                     qc.connect();
                 }
 
-                if(!qc.put(upDescriptorDoc)){
+                if (!qc.put(upDescriptorDoc)) {
                     // TODO Log the error
                     System.err.println("Error trying to queue a SU");
                     collector.fail(input);
@@ -450,22 +431,22 @@ public class StreamProcessorBolt implements IRichBolt {
             // Send to the API
             restClient.restRequest(
                     dc.restBaseURL
-                            + "private/" + soId + "/streams/"
-                            + streamId + "/" + opid, resultSUDoc,
+                    + "private/" + soId + "/streams/"
+                    + streamId + "/" + opid, resultSUDoc,
                     RestClient.PUT,
                     null);
             sendAllToReputation(input, sensorUpdates, originId, so, streamId, Reputation.DISCARD_NONE);
-        } catch(RestClientErrorCodeException e){
+        } catch (RestClientErrorCodeException e) {
             // TODO Log the error
             e.printStackTrace();
-            if(e.getRestResponse().getHttpCode()>= 500){
+            if (e.getRestResponse().getHttpCode() >= 500) {
                 collector.fail(input);
                 return;
             }
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;
-        }catch (Exception e) {
+        } catch (Exception e) {
             // TODO Log the error
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
@@ -477,7 +458,7 @@ public class StreamProcessorBolt implements IRichBolt {
         return;
     }
 
-	public void cleanup() {
+    public void cleanup() {
         try {
             this.qc.disconnect();
         } catch (QueueClientException e) {
@@ -487,7 +468,9 @@ public class StreamProcessorBolt implements IRichBolt {
     }
 
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        if (dc.benchmark) declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        if (dc.benchmark) {
+            declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        }
         declarer.declareStream(Reputation.STREAM_SO_SO, new Fields("in-soid", "in-streamid", "out-soid", "out-streamid", "user_timestamp", "date", "event", "discard"));
 
     }

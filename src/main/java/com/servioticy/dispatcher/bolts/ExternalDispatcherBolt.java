@@ -23,9 +23,6 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.servioticy.datamodel.reputation.Reputation;
-import de.passau.uni.sec.compose.pdp.servioticy.LocalPDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PermissionCacheObject;
 import org.apache.log4j.Logger;
 
 import backtype.storm.task.OutputCollector;
@@ -138,9 +135,6 @@ public class ExternalDispatcherBolt implements IRichBolt {
 //                collector.ack(input);
 //                return;
 //            }
-
-
-
             String destTopic = externalSub.getDestination() + "/" + sourceSOId + "/streams/" + streamId + "/updates";
             publisher.publishMessage(destTopic, mapper.writeValueAsString(su));
             this.collector.emit(Reputation.STREAM_SO_PUBSUB, input,

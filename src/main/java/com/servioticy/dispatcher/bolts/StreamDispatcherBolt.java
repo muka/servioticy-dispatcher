@@ -35,11 +35,6 @@ import com.servioticy.restclient.RestClient;
 import com.servioticy.restclient.RestClientErrorCodeException;
 import com.servioticy.restclient.RestResponse;
 
-import de.passau.uni.sec.compose.pdp.servioticy.LocalPDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PDP;
-import de.passau.uni.sec.compose.pdp.servioticy.PermissionCacheObject;
-import de.passau.uni.sec.compose.pdp.servioticy.exception.PDPServioticyException;
-
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -176,7 +171,7 @@ public class StreamDispatcherBolt implements IRichBolt {
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");
             collector.ack(input);
             return;
-        }catch (Exception e) {
+        } catch (Exception e) {
             // TODO Log the error
             e.printStackTrace();
             BenchmarkBolt.send(collector, input, dc, suDoc, "error");

@@ -30,8 +30,6 @@ import com.servioticy.datamodel.sensorupdate.SensorUpdate;
 import com.servioticy.dispatcher.jsonprocessors.AliasReplacer;
 import com.servioticy.dispatcher.jsonprocessors.JsonPathReplacer;
 import org.elasticsearch.common.geo.GeoPoint;
-import org.mozilla.javascript.ProvenanceAPI;
-import org.mozilla.javascript.Provelement;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.util.*;
@@ -153,120 +151,121 @@ public class SOProcessor010 extends SOProcessor{
         return result;
     }
 
-    public boolean checkFilter(JsonPathReplacer filterField, Map<String, String> inputJsons, List<Provelement> provList, Map<String, String> mapVarSU, String soSecurityDoc) throws ScriptException {
-        if (filterField == null) {
-            return true;
-        }
-
-        HashMap<String, String> inputVar = new HashMap();
-
-        String filterCode = filterField.replace(inputJsons, inputVar, mapVarSU);
-
-        inputVar.put(ProvenanceAPI.COMPUTATION, "Boolean(" + filterCode + ")");
-        String fullComputationString = ProvenanceAPI.buildString(inputVar);
-
-        List<Provelement> newProvList = (List<Provelement>)ProvenanceAPI.executeSOcode(fullComputationString, provList, soSecurityDoc);
-
-        provList.clear();
-        provList.addAll(newProvList);
-
-        String result = (String) ProvenanceAPI.getResultValue(provList);
-
-
-        return Boolean.parseBoolean(result);
-    }
+//    public boolean checkFilter(JsonPathReplacer filterField, Map<String, String> inputJsons, List<Provelement> provList, Map<String, String> mapVarSU, String soSecurityDoc) throws ScriptException {
+//        if (filterField == null) {
+//            return true;
+//        }
+//
+//        HashMap<String, String> inputVar = new HashMap();
+//
+//        String filterCode = filterField.replace(inputJsons, inputVar, mapVarSU);
+//
+//        inputVar.put(ProvenanceAPI.COMPUTATION, "Boolean(" + filterCode + ")");
+//        String fullComputationString = ProvenanceAPI.buildString(inputVar);
+//
+//        List<Provelement> newProvList = (List<Provelement>)ProvenanceAPI.executeSOcode(fullComputationString, provList, soSecurityDoc);
+//
+//        provList.clear();
+//        provList.addAll(newProvList);
+//
+//        String result = (String) ProvenanceAPI.getResultValue(provList);
+//
+//
+//        return Boolean.parseBoolean(result);
+//    }
 
     @Override
     public SensorUpdate getResultSU(String streamId, Map<String, SensorUpdate> inputSUs, String origin, long timestamp) throws JsonParseException, JsonMappingException, IOException, ScriptException {
-
-        List<Provelement> provList = new LinkedList<Provelement>();
-        Map<String, String> mapVarSU = new HashMap<String, String>();
-        String soSecurityDoc = mapper.writeValueAsString(this.so.getSecurity());
-        Map<String, String> inputDocs = new HashMap<String, String>();
-        for(Map.Entry<String,SensorUpdate> inputSUEntry: inputSUs.entrySet()){
-            inputDocs.put(inputSUEntry.getKey(), this.mapper.writeValueAsString(inputSUEntry.getValue()));
-        }
-        PSOStream pstream = this.streams.get(streamId);
-        if (!checkFilter(pstream.preFilter, inputDocs, provList, mapVarSU, soSecurityDoc)){
-            return null;
-        }
+//
+//        List<Provelement> provList = new LinkedList<Provelement>();
+//        Map<String, String> mapVarSU = new HashMap<String, String>();
+//        String soSecurityDoc = mapper.writeValueAsString(this.so.getSecurity());
+//        Map<String, String> inputDocs = new HashMap<String, String>();
+//        for(Map.Entry<String,SensorUpdate> inputSUEntry: inputSUs.entrySet()){
+//            inputDocs.put(inputSUEntry.getKey(), this.mapper.writeValueAsString(inputSUEntry.getValue()));
+//        }
+//        PSOStream pstream = this.streams.get(streamId);
+//        if (!checkFilter(pstream.preFilter, inputDocs, provList, mapVarSU, soSecurityDoc)){
+//            return null;
+//        }
 
         SensorUpdate su = new SensorUpdate();
 
         su.setLastUpdate(timestamp);
         su.setChannels(new LinkedHashMap<String, SUChannel>());
+//
+//        int nulls = 0;
+//        for (Entry<String, PSOChannel> channelEntry : pstream.channels.entrySet()) {
+//            PSOChannel pchannel = channelEntry.getValue();
+//            SUChannel suChannel = new SUChannel();
+//            if (pchannel.currentValue == null) {
+//                suChannel.setCurrentValue(null);
+//                nulls++;
+//            } else {
+//                HashMap<String, String> inputVar = new HashMap();
+//                String currentValueCode = pchannel.currentValue.replace(inputDocs, inputVar, mapVarSU);
+//                Class type;
+//                String typeName;
+//                Object result = null;
+//                typeName = pchannel.type.toLowerCase();
+//                if (typeName.equals("number")) {
+//                    type = Double.class;
+//                } else if (typeName.equals("boolean")) {
+//                    type = Boolean.class;
+//                } else if (typeName.equals("string")) {
+//                    type = String.class;
+//                }
+//                else if (typeName.equals("geo_point")) {
+//                    type = GeoPoint.class;
+//                }
+//                else {
+//                    return null;
+//                }
+//                inputVar.put(ProvenanceAPI.COMPUTATION, "JSON.stringify(" + currentValueCode + ")");
+//
+//                String fullComputationString = ProvenanceAPI.buildString(inputVar);
+//
+//                List<Provelement> newProvList = (List<Provelement>)ProvenanceAPI.executeSOcode(fullComputationString, provList, soSecurityDoc);
+//                if(newProvList == null){
+//                    throw new ScriptException("Something went wrong");
+//                }
+//                provList.clear();
+//                provList.addAll(newProvList);
+//
+//                result = this.mapper.readValue((String)ProvenanceAPI.getResultValue(provList), type);
+//                if(type == GeoPoint.class)
+//                    result = ((GeoPoint)result).getLat()+","+((GeoPoint)result).getLon();
+//                suChannel.setCurrentValue(result);
+//
+//            }
+//            suChannel.setUnit(pchannel.unit);
+//
+//            su.getChannels().put(channelEntry.getKey(), suChannel);
+//        }
+//
+//        if (nulls >= su.getChannels().size()) {
+//            // This stream is mapping a Web Object.
+//            return null;
+//        }
+//
+//        su.setTriggerPath(new ArrayList<ArrayList<String>>());
+//
+//        su.setPathTimestamps(new ArrayList<Long>());
+//
+//        this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+//        String resultSUDoc = this.mapper.writeValueAsString(su);
+//        if(!inputDocs.containsKey("result")){
+//            inputDocs.put("result", resultSUDoc);
+//        }
+//
+//        if (!checkFilter(pstream.postFilter, inputDocs, provList, mapVarSU, soSecurityDoc)){
+//            return null;
+//        }
+//
+//        String provJson = ProvenanceAPI.buildProvenanceJSON(soSecurityDoc, provList, mapVarSU, streamId);
+//        su.setSecurity(mapper.readValue(provJson, Object.class));
+//        su.setComposed(true);
 
-        int nulls = 0;
-        for (Entry<String, PSOChannel> channelEntry : pstream.channels.entrySet()) {
-            PSOChannel pchannel = channelEntry.getValue();
-            SUChannel suChannel = new SUChannel();
-            if (pchannel.currentValue == null) {
-                suChannel.setCurrentValue(null);
-                nulls++;
-            } else {
-                HashMap<String, String> inputVar = new HashMap();
-                String currentValueCode = pchannel.currentValue.replace(inputDocs, inputVar, mapVarSU);
-                Class type;
-                String typeName;
-                Object result = null;
-                typeName = pchannel.type.toLowerCase();
-                if (typeName.equals("number")) {
-                    type = Double.class;
-                } else if (typeName.equals("boolean")) {
-                    type = Boolean.class;
-                } else if (typeName.equals("string")) {
-                    type = String.class;
-                }
-                else if (typeName.equals("geo_point")) {
-                    type = GeoPoint.class;
-                }
-                else {
-                    return null;
-                }
-                inputVar.put(ProvenanceAPI.COMPUTATION, "JSON.stringify(" + currentValueCode + ")");
-
-                String fullComputationString = ProvenanceAPI.buildString(inputVar);
-
-                List<Provelement> newProvList = (List<Provelement>)ProvenanceAPI.executeSOcode(fullComputationString, provList, soSecurityDoc);
-                if(newProvList == null){
-                    throw new ScriptException("Something went wrong");
-                }
-                provList.clear();
-                provList.addAll(newProvList);
-
-                result = this.mapper.readValue((String)ProvenanceAPI.getResultValue(provList), type);
-                if(type == GeoPoint.class)
-                    result = ((GeoPoint)result).getLat()+","+((GeoPoint)result).getLon();
-                suChannel.setCurrentValue(result);
-
-            }
-            suChannel.setUnit(pchannel.unit);
-
-            su.getChannels().put(channelEntry.getKey(), suChannel);
-        }
-
-        if (nulls >= su.getChannels().size()) {
-            // This stream is mapping a Web Object.
-            return null;
-        }
-
-        su.setTriggerPath(new ArrayList<ArrayList<String>>());
-
-        su.setPathTimestamps(new ArrayList<Long>());
-
-        this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        String resultSUDoc = this.mapper.writeValueAsString(su);
-        if(!inputDocs.containsKey("result")){
-            inputDocs.put("result", resultSUDoc);
-        }
-
-        if (!checkFilter(pstream.postFilter, inputDocs, provList, mapVarSU, soSecurityDoc)){
-            return null;
-        }
-
-        String provJson = ProvenanceAPI.buildProvenanceJSON(soSecurityDoc, provList, mapVarSU, streamId);
-        su.setSecurity(mapper.readValue(provJson, Object.class));
-        su.setComposed(true);
         return su;
     }
 
