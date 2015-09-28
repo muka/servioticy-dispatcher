@@ -1,4 +1,5 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * Copyright 2014 Barcelona Supercomputing Center (BSC)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- ******************************************************************************/
+ *****************************************************************************
+ */
 package com.servioticy.dispatcher.bolts;
 
 import backtype.storm.task.OutputCollector;
@@ -26,9 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.servioticy.datamodel.reputation.Reputation;
 import com.servioticy.datamodel.sensorupdate.SensorUpdate;
 import com.servioticy.dispatcher.DispatcherContext;
-import com.servioticy.restclient.FutureRestResponse;
 import com.servioticy.restclient.RestClient;
-import com.servioticy.restclient.RestResponse;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +40,7 @@ import java.util.UUID;
  *
  */
 public class PrepareBolt implements IRichBolt {
+
     /**
      *
      */
@@ -48,7 +49,6 @@ public class PrepareBolt implements IRichBolt {
     private RestClient restClient;
     private DispatcherContext dc;
     private ObjectMapper mapper;
-
 
     public PrepareBolt(DispatcherContext dc) {
         this.dc = dc;
@@ -60,8 +60,7 @@ public class PrepareBolt implements IRichBolt {
         this.restClient = restClient;
     }
 
-    public void prepare(Map stormConf, TopologyContext context,
-                        OutputCollector collector) {
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
         this.mapper = new ObjectMapper();
 
@@ -93,11 +92,10 @@ public class PrepareBolt implements IRichBolt {
 //                this.collector.fail(input);
 //                return;
 //            }
-
             su = this.mapper.readValue(suDoc, SensorUpdate.class);
 
             // Reputation
-            if (su.getComposed() == null || !su.getComposed()){
+            if (su.getComposed() == null || !su.getComposed()) {
                 this.collector.emit(Reputation.STREAM_WO_SO, input,
                         new Values(soid,
                                 streamid,
@@ -108,7 +106,7 @@ public class PrepareBolt implements IRichBolt {
             }
 
             // Benchmark
-            if(dc.benchmark) {
+            if (dc.benchmark) {
 
                 if (su.getTriggerPath() == null) {
                     su.setTriggerPath(new ArrayList<ArrayList<String>>());
@@ -149,7 +147,6 @@ public class PrepareBolt implements IRichBolt {
             return;
         }
 
-        
         this.collector.emit(
                 "stream",
                 input,
@@ -175,7 +172,9 @@ public class PrepareBolt implements IRichBolt {
         declarer.declareStream("subscription", new Fields("soid", "streamid", "su"));
         declarer.declareStream("stream", new Fields("docid", "destination", "su"));
         declarer.declareStream(Reputation.STREAM_WO_SO, new Fields("out-soid", "out-streamid", "user_timestamp", "date", "fresh"));
-        if (dc.benchmark) declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        if (dc.benchmark) {
+            declarer.declareStream("benchmark", new Fields("su", "stopts", "reason"));
+        }
 
     }
 
